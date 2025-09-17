@@ -8,7 +8,7 @@ We...
 | Member | Progress | Issues | Action Items |
 |----------|----------|----------|----------|
 | Halil | Created Flask application root and health check endpoints | None | Help setup the database foundation |
-| Row 2    | Data     | More     | More     |
+| Justin     | Created home page prototype     | More     | Helped setup the end user interface |
 | Row 3    | Data     | More     | More     |
 | Row 4    | Data     | More     | More     |
 | Row 5    | Data     | More     | More     |
