@@ -1,5 +1,5 @@
 # Centsible
-[!(https://github.com/Halila2727/ExpenseSplittingTracking/blob/main/images/CentsibleLogoTweaked.png)]
+[![logo](https://github.com/Halila2727/ExpenseSplittingTracking/blob/main/images/CentsibleLogoTweaked.png)]
 ## The Idea:
 We are aiming to create a web app which allows groups to input their expenses and split them among the group based on various settings they have set.
 Users will be able to configure the way expenses are split among the group in order to make cost-sharing simple and transparent.
