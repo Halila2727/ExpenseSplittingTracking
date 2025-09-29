@@ -8,7 +8,7 @@ We...
 | Member | Progress | Issues | Action Items |
 |----------|----------|----------|----------|
 | Halil | Created Flask application root and health check endpoints | None | Help setup the database foundation |
-| Row 2    | Data     | More     | More     |
+| Justin     | Created home page prototype     | None | Helped setup the end user interface |
 | Row 3    | Data     | More     | More     |
-| Row 4    | Data     | More     | More     |
-| Row 5    | Data     | More     | More     |
+| Tony    | Helped set up repository     | More     | Finish writing the README then ask for further tasks     |
+| Zara    | Set up SQLite database and established connection   | None     | Design tables, schema, and user model     |
