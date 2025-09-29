@@ -14,7 +14,7 @@
 | Member | Progress | Issues | Action Items |
 |----------|----------|----------|----------|
 | Halil | Practiced some Python, created Logo, created Wireframe | None | Get started with backend account registration system |
-| Justin |  |  |  |
+| Justin | Created a login and signup feature | None | I will work on dashboard |
 | Ahnaf |  |  |  |
 | Tony    |  |  |  |
 | Zara    |  |  |  |
