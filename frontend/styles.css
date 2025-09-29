@@ -303,35 +303,67 @@ footer {
 }
 
 /* Dashboard Styles */
-.dashboard-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 2rem;
-    margin-top: 2rem;
-}
+.dashboard { padding: 2rem 0 4rem; background: var(--dark); }
 
-.dashboard-card {
+.balance-banner {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+.balance-title { font-size: 2rem; color: var(--primary); }
+.balance-amount { font-size: 3rem; font-weight: 800; }
+.balance-amount.negative { color: #ff4d4d; }
+.balance-amount.positive { color: #00ff7b; }
+
+.subnav {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
     background: var(--light);
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: .75rem 1rem;
+    border-radius: 999px;
+    width: fit-content;
+    margin: 0 auto 1.5rem;
+}
+.subnav-link {
+    color: var(--primary);
+    text-decoration: none;
+    padding: .4rem .9rem;
+    border-radius: 999px;
+}
+.subnav-link.active { background: rgba(0,255,0,0.15); }
+
+.dashboard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    background: var(--light);
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+}
+.dashboard-heading { color: var(--primary); }
+.action-buttons { display: flex; gap: .75rem; }
+.btn.btn-secondary { background: var(--secondary); color: #000 !important; }
+.btn.btn-outline { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+
+.breakdown {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.breakdown-card {
+    background: var(--light);
+    padding: 1.25rem;
+    border-radius: 12px;
     text-align: center;
 }
-
-.dashboard-card h3 {
-    color: var(--dark);
-    margin-bottom: 1rem;
-}
-
-.dashboard-card a {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.dashboard-card a:hover {
-    text-decoration: underline;
-}
+.breakdown-card .amount { font-size: 2rem; font-weight: 700; margin-top: .25rem; }
+.breakdown-card.owe .amount { color: #ff4d4d; }
+.breakdown-card.owed .amount { color: #00ff7b; }
 
 /* Responsive Design */
 @media (max-width: 768px) {
