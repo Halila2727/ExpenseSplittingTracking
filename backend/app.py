@@ -2,10 +2,10 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 
-# Create Flask application instance
+# instance of Flask
 app = Flask(__name__)
 
-# Enable CORS for frontend communication
+# This is for frontend communication
 CORS(app)
 
 # Configuration

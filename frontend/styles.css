@@ -56,6 +56,21 @@ nav {
     font-size: 2rem;
 }
 
+.logo-image {
+    height: 32px; /* reduce header logo size */
+    width: auto;
+    max-width: 120px; /* guard against huge intrinsic image */
+    margin-right: 10px;
+    object-fit: contain;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+.logo-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
 .nav-links {
     display: flex;
     list-style: none;
@@ -101,6 +116,12 @@ nav {
     text-align: center;
     background-color: var(--dark);
 }
+/* Ensure hero contents are perfectly centered */
+.hero .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
 .hero h1 {
     font-size: 3rem;
@@ -121,6 +142,21 @@ nav {
     display: block;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0, 255, 0, 0.1);
+}
+
+/* Hero Logo sizing */
+.hero-logo {
+    display: block;
+    margin: 0.5rem auto 1.25rem;
+    height: 200px;      /* desktop height */
+    width: auto;
+    max-width: 80vw;    /* guard on small screens */
+}
+
+@media (max-width: 768px) {
+    .hero-logo {
+        height: 130px;   /* mobile size */
+    }
 }
 
 /* Features Section */
@@ -266,10 +302,45 @@ footer {
     border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Dashboard Styles */
+.dashboard-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.dashboard-card {
+    background: var(--light);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.dashboard-card h3 {
+    color: var(--dark);
+    margin-bottom: 1rem;
+}
+
+.dashboard-card a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.dashboard-card a:hover {
+    text-decoration: underline;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .nav-links {
         display: none;
+    }
+    
+    .dashboard-content {
+        grid-template-columns: 1fr;
     }
 
     .hero h1 {
