@@ -14,7 +14,10 @@ class ComponentLoader {
   }
 
   static loadHeader() {
-    this.loadComponent('components/header.html', 'header-container');
+    const path = window.location.pathname;
+    const isAuthPage = /\/login\.html$|\/signup\.html$/.test(path);
+    const headerFile = isAuthPage ? 'components/header-auth.html' : 'components/header.html';
+    this.loadComponent(headerFile, 'header-container');
   }
 }
 
