@@ -79,7 +79,7 @@ header {
     background: var(--dark);
     color: var(--primary);
     padding: 1rem 0;
-    box-shadow: 0 4px 12px rgba(0, 255, 0, 0.1);
+    box-shadow: none;
 }
 
 nav {
