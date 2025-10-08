@@ -18,3 +18,13 @@
 | Ahnaf |  |  |  |
 | Tony    |  |  |  |
 | Zara    | Created ERD for database, translated diagram into actual database tables using SQL, tested DB w/ sample data  | None  | Add functions that will allow for recording expenses, splitting it, and updating balances  |
+
+# Report 3
+
+| Member | Progress | Issues | Action Items |
+|----------|----------|----------|----------|
+| Halil | Created Flask backend with user authentication which includes password hasing using bcrypt. Also created popup modals for adding expenses and settling payments in dashboard | Not sure if user authentication is secure enough | Continue with backend integration for dashboard |
+| Justin |  | None |  |
+| Ahnaf |  |  |  |
+| Tony    |  |  |  |
+| Zara    |  | None  |  |
