@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centsible - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="header-container"></div>
+
+  <section class="dashboard">
+    <div class="container">
+      <div class="balance-banner">
+        <span class="balance-title">Your Balance:</span>
+        <span class="balance-amount negative">-$7.52</span>
+      </div>
+
+      <div class="subnav">
+        <a href="#" class="subnav-link active">Dashboard</a>
+        <a href="#" class="subnav-link">Recent Activity</a>
+        <a href="#" class="subnav-link">Groups</a>
+        <a href="#" class="subnav-link">Personal</a>
+      </div>
+
+      <div class="dashboard-actions">
+        <h2 class="dashboard-heading">Welcome, <span class="user-name">User</span>!</h2>
+        <div class="action-buttons">
+          <button class="btn btn-secondary" onclick="addExpense()">Add an expense</button>
+          <button class="btn btn-outline" onclick="settleExpense()">Settle an expense</button>
+        </div>
+      </div>
+
+      <div class="breakdown">
+        <div class="breakdown-card owe">
+          <h3>You owe</h3>
+          <div class="amount">$10.52</div>
+          <p class="note">in red</p>
+        </div>
+        <div class="breakdown-card owed">
+          <h3>You are owed</h3>
+          <div class="amount">$3.00</div>
+          <p class="note">in green</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Add Expense Modal -->
+  <div id="addExpenseModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Expense</h2>
+        <span class="close" onclick="closeModal('addExpenseModal')">&times;</span>
+      </div>
+      <form id="addExpenseForm" class="modal-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expenseAmount">Amount *</label>
+            <input type="number" id="expenseAmount" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label for="expenseCurrency">Currency</label>
+            <select id="expenseCurrency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expenseDescription">Description *</label>
+          <input type="text" id="expenseDescription" placeholder="What was this expense for?" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expensePayer">Paid by *</label>
+            <select id="expensePayer" required>
+              <option value="">Select payer</option>
+              <option value="me">Me</option>
+              <!-- Other group members will be populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="expenseDate">Date *</label>
+            <input type="date" id="expenseDate" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expenseGroup">Group *</label>
+          <select id="expenseGroup" required>
+            <option value="">Select group</option>
+            <option value="general">General</option>
+            <!-- Groups will be populated dynamically -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="expenseCategory">Category</label>
+          <select id="expenseCategory">
+            <option value="">Select category</option>
+            <option value="food">Food & Dining</option>
+            <option value="transport">Transportation</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="utilities">Utilities</option>
+            <option value="shopping">Shopping</option>
+            <option value="travel">Travel</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="expenseParticipants">Split with *</label>
+          <div class="participants-container">
+            <div class="participant-item">
+              <input type="checkbox" id="participant-me" checked disabled>
+              <label for="participant-me">Me</label>
+            </div>
+            <!-- Other participants will be added dynamically -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="expenseSplitMethod">Split method *</label>
+          <select id="expenseSplitMethod" required>
+            <option value="equal">Split equally</option>
+            <option value="shares">Split by shares</option>
+            <option value="percentage">Split by percentage</option>
+            <option value="exact">Split by exact amount</option>
+          </select>
+        </div>
+
+        <div id="splitDetails" class="split-details" style="display: none;">
+          <!-- Dynamic split details will be added here -->
+        </div>
+
+        <div class="form-group">
+          <label for="expenseReceipt">Receipt (optional)</label>
+          <input type="file" id="expenseReceipt" accept="image/*">
+        </div>
+
+        <div class="form-group">
+          <label for="expenseNote">Note/Memo</label>
+          <textarea id="expenseNote" rows="3" placeholder="Add a note about this expense..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('addExpenseModal')">Cancel</button>
+          <button type="submit" class="btn">Add Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Settle Expense Modal -->
+  <div id="settleExpenseModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settle Up</h2>
+        <span class="close" onclick="closeModal('settleExpenseModal')">&times;</span>
+      </div>
+      <form id="settleExpenseForm" class="modal-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="settleAmount">Amount *</label>
+            <input type="number" id="settleAmount" step="0.01" min="0" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label for="settleCurrency">Currency</label>
+            <select id="settleCurrency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="settlePayer">Paid by *</label>
+            <select id="settlePayer" required>
+              <option value="">Select payer</option>
+              <option value="me">Me</option>
+              <!-- Other group members will be populated dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="settlePayee">Paid to *</label>
+            <select id="settlePayee" required>
+              <option value="">Select payee</option>
+              <!-- Group members will be populated dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="settleDate">Date *</label>
+            <input type="date" id="settleDate" required>
+          </div>
+          <div class="form-group">
+            <label for="settleGroup">Group *</label>
+            <select id="settleGroup" required>
+              <option value="">Select group</option>
+              <option value="general">General</option>
+              <!-- Groups will be populated dynamically -->
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="settleNote">Note/Memo</label>
+          <textarea id="settleNote" rows="3" placeholder="Add a note about this payment..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('settleExpenseModal')">Cancel</button>
+          <button type="submit" class="btn">Record Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/components.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
