@@ -1,4 +1,8 @@
 /* Global Styles */
+body, html {
+  overflow: visible;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -27,6 +31,15 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+}
+
+.sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: var(--dark);
 }
 
 /* Header Styles */
@@ -420,3 +433,7 @@ footer {
     font-weight: bold;
 }
 
+.sticky {
+    position: sticky;
+    top: 0;
+}
