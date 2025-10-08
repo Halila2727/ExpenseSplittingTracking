@@ -7,11 +7,12 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
 
     // Clear previous messages
     message.textContent = "";
+    message.className = "login-message";
 
     try {
         // Show loading state
-        message.style.color = "blue";
-        message.textContent = "Logging in...";
+        message.className = "login-message loading";
+        message.textContent = "Authenticating...";
 
         const response = await fetch('http://localhost:5000/auth/login', {
             method: 'POST',
@@ -31,19 +32,19 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
 
-            message.style.color = "lime";
-            message.textContent = "Login successful! Redirecting to dashboard...";
+            message.className = "login-message success";
+            message.textContent = "Authentication successful. Redirecting to dashboard...";
             
             setTimeout(() => {
                 window.location.href = "dashboard.html";
             }, 1500);
         } else {
-            message.style.color = "red";
-            message.textContent = `❌ ${data.error}`;
+            message.className = "login-message error";
+            message.textContent = data.error;
         }
     } catch (error) {
         console.error('Login error:', error);
-        message.style.color = "red";
-        message.textContent = "Network error. Please try again.";
+        message.className = "login-message error";
+        message.textContent = "Connection failed. Please check your network and try again.";
     }
 });

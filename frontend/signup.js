@@ -9,23 +9,24 @@ document.getElementById("signupForm").addEventListener("submit", async function(
 
     // Clear previous messages
     message.textContent = "";
+    message.className = "login-message";
 
     // Client-side validation
     if (password !== confirmPassword) {
-        message.style.color = "red";
+        message.className = "login-message error";
         message.textContent = "Passwords do not match.";
         return;
     }
 
     if (password.length < 6) {
-        message.style.color = "red";
+        message.className = "login-message error";
         message.textContent = "Password must be at least 6 characters.";
         return;
     }
 
     try {
         // Show loading state
-        message.style.color = "blue";
+        message.className = "login-message loading";
         message.textContent = "Creating account...";
 
         const response = await fetch('http://localhost:5000/auth/signup', {
@@ -47,19 +48,19 @@ document.getElementById("signupForm").addEventListener("submit", async function(
             localStorage.setItem("user", JSON.stringify(data.user));
             localStorage.setItem("token", data.token);
 
-            message.style.color = "lime";
-            message.textContent = "Account created! Redirecting to dashboard...";
+            message.className = "login-message success";
+            message.textContent = "Account created successfully. Redirecting to dashboard...";
 
             setTimeout(() => {
                 window.location.href = "dashboard.html";
             }, 1500);
         } else {
-            message.style.color = "red";
-            message.textContent = `❌ ${data.error}`;
+            message.className = "login-message error";
+            message.textContent = data.error;
         }
     } catch (error) {
         console.error('Signup error:', error);
-        message.style.color = "red";
-        message.textContent = "❌ Network error. Please try again.";
+        message.className = "login-message error";
+        message.textContent = "Connection failed. Please check your network and try again.";
     }
 });
