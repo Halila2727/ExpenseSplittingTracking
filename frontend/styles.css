@@ -1,4 +1,8 @@
 /* Global Styles */
+body, html {
+  overflow: visible;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -27,6 +31,47 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+}
+
+.sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: var(--dark);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--primary);
+}
+
+.logo:visited,
+.logo:hover,
+.logo:active {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+
+
+nav .toggle-navbar {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  width: 30px;
+  height: 22px;
+  justify-content: space-between;
+}
+
+nav .toggle-navbar .bar {
+  height: 4px;
+  width: 100%;
+  background-color: white;
+  border-radius: 2px;
 }
 
 /* Header Styles */
@@ -153,9 +198,48 @@ nav {
     max-width: 80vw;    /* guard on small screens */
 }
 
+#toggle-navbar {
+  display: none;
+}
+
+.menu {
+  display: none;
+}
+
 @media (max-width: 768px) {
     .hero-logo {
-        height: 130px;   /* mobile size */
+        height: 130px;
+    }
+    nav .menu {
+        width: 100vw;
+        height: calc(100vh - 60px);
+        position: absolute;
+        top: 60px;
+        left: 0;
+        background-color:#00ff00;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        width: 200px;
+        display: none;
+        padding: 10px 0;
+        border-radius: 5px;
+        z-index: 9999;
+    }
+
+    nav .menu li {
+        width: 100%;
+        margin-bottom: 40px;
+        font-size: 1.2rem;
+    }
+
+    nav input[type="checkbox"]:checked ~ .menu {
+        display: flex;
+    }
+
+    nav .toggle-navbar {
+        display: flex;
     }
 }
 
@@ -430,3 +514,9 @@ footer {
     margin-top: 1rem;
     font-weight: bold;
 }
+
+.sticky {
+    position: sticky;
+    top: 0;
+}
+
