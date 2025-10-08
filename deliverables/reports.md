@@ -27,4 +27,4 @@
 | Justin |  | None |  |
 | Ahnaf |  |  |  |
 | Tony    |  |  |  |
-| Zara    |  | None  |  |
+| Zara    | Added CRUD operations such as creating users, groups, expenses, checking user balances, evenly splitting expenses, recording payments/settlements  | None  | Figure out how to connect with frontend |
