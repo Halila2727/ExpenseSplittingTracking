@@ -519,6 +519,163 @@ footer {
     font-weight: 800;
 }
 
+/* Activity Page Styles */
+.activity {
+    padding: 2rem 0 4rem;
+    background: var(--dark);
+}
+
+
+.activity-list {
+    background: var(--light);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background-color 0.2s ease;
+    background: white;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+    font-weight: bold;
+}
+
+.activity-icon.expense {
+    background: #e8f5e8;
+    color: #2d5a2d;
+}
+
+.activity-icon.payment {
+    background: #e8f5e8;
+    color: #2d5a2d;
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-description {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 0.25rem;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+
+.activity-meta {
+    font-size: 0.85rem;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.activity-group {
+    background: #f0f0f0;
+    padding: 0.2rem 0.4rem;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.activity-amount {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #333;
+    margin-left: auto;
+    flex-shrink: 0;
+    text-align: right;
+    line-height: 1.2;
+}
+
+.activity-amount.positive {
+    color: #2d5a2d;
+}
+
+.activity-amount.negative {
+    color: #8b0000;
+}
+
+.activity-date {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 0.25rem;
+}
+
+.activity-status {
+    font-size: 0.8rem;
+    color: #999;
+    margin-left: auto;
+    margin-right: 0;
+    flex-shrink: 0;
+    text-align: right;
+    line-height: 1.2;
+}
+
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--gray);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--dark);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--gray);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    margin-bottom: 2rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .nav-links {

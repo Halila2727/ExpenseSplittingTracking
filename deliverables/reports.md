@@ -28,3 +28,43 @@
 | Ahnaf |  |  |  |
 | Tony    |  |  |  |
 | Zara    | Added CRUD operations such as creating users, groups, expenses, checking user balances, evenly splitting expenses, recording payments/settlements  | None  | Figure out how to connect with frontend |
+
+# Report 4
+
+| Member | Progress | Issues | Action Items |
+|----------|----------|----------|----------|
+| Halil |  |  |  |
+| Justin |  |  |  |
+| Ahnaf |  |  |  |
+| Tony    |  |  |  |
+| Zara    |  |  |  |
+
+# Report 5
+
+| Member | Progress | Issues | Action Items |
+|----------|----------|----------|----------|
+| Halil |  |  |  |
+| Justin |  |  |  |
+| Ahnaf |  |  |  |
+| Tony    |  |  |  |
+| Zara    |  |  |  |
+
+# Report 6
+
+| Member | Progress | Issues | Action Items |
+|----------|----------|----------|----------|
+| Halil |  |  |  |
+| Justin |  |  |  |
+| Ahnaf |  |  |  |
+| Tony    |  |  |  |
+| Zara    |  |  |  |
+
+# Report 7
+
+| Member | Progress | Issues | Action Items |
+|----------|----------|----------|----------|
+| Halil |  |  |  |
+| Justin |  |  |  |
+| Ahnaf |  |  |  |
+| Tony    |  |  |  |
+| Zara    |  |  |  |

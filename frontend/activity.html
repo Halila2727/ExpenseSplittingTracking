@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centsible - Recent Activity</title>
+  <link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body>
+  <div id="header-container"></div>
+
+  <section class="activity">
+    <div class="container">
+      <div class="balance-banner">
+        <span class="balance-title">Recent Activity</span>
+      </div>
+
+      <div class="subnav">
+        <a href="dashboard.html" class="subnav-link">Dashboard</a>
+        <a href="#" class="subnav-link active">Recent Activity</a>
+        <a href="#" class="subnav-link">Groups</a>
+        <a href="#" class="subnav-link">Personal</a>
+      </div>
+
+
+      <div class="activity-list" id="activity-list">
+        <div class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading recent activity...</p>
+        </div>
+      </div>
+
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-icon">📊</div>
+        <h3>No recent activity</h3>
+        <p>You haven't had any expenses or payments recently.</p>
+        <a href="dashboard.html" class="btn">Add an expense</a>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/components.js"></script>
+  <script src="js/activity.js"></script>
+</body>
+</html>

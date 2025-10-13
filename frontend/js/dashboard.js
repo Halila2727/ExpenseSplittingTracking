@@ -1,5 +1,7 @@
 // Dashboard functionality
+
 document.addEventListener('DOMContentLoaded', function() {
+    
     // Check if user is authenticated
     checkAuthentication();
     
@@ -10,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function checkAuthentication() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
+    
     
     if (!token || !user) {
         // Redirect to login if not authenticated
@@ -45,12 +48,17 @@ async function checkAuthentication() {
         // Display user info
         displayUserInfo(data.user);
         
+        // Load balance data
+        loadBalanceData();
+        
     } catch (error) {
         console.error('Authentication check failed:', error);
         // On network error, allow user to stay but show warning
         console.warn('Could not verify authentication, proceeding with cached data');
         const userData = JSON.parse(user);
         displayUserInfo(userData);
+        // Try to load balance data even if auth check failed
+        loadBalanceData();
     }
 }
 
@@ -66,6 +74,95 @@ function displayUserInfo(user) {
     userEmailElements.forEach(element => {
         element.textContent = user.email;
     });
+}
+
+async function loadBalanceData() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        console.error('No authentication token available');
+        displayBalanceError();
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/balance', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const balanceData = await response.json();
+        displayBalanceData(balanceData);
+        
+    } catch (error) {
+        console.error('Failed to load balance data:', error);
+        // Show error message or fallback to placeholder data
+        displayBalanceError();
+    }
+}
+
+function displayBalanceData(balanceData) {
+    // Update main balance
+    const balanceAmount = document.querySelector('.balance-amount');
+    
+    if (balanceAmount) {
+        const netBalance = balanceData.net_balance;
+        
+        // Format the balance text
+        if (netBalance > 0) {
+            balanceAmount.textContent = `+$${netBalance.toFixed(2)}`;
+        } else if (netBalance < 0) {
+            balanceAmount.textContent = `-$${Math.abs(netBalance).toFixed(2)}`;
+        } else {
+            balanceAmount.textContent = `$${netBalance.toFixed(2)}`;
+        }
+        
+        // Update CSS class and inline styles to match breakdown card colors
+        balanceAmount.className = 'balance-amount';
+        balanceAmount.style.color = '';
+        balanceAmount.style.fontWeight = '';
+        
+        if (netBalance < 0) {
+            // Red color to match breakdown-card.owe
+            balanceAmount.style.color = '#8b0000'; // --error-dark
+            balanceAmount.style.fontWeight = '800';
+        } else if (netBalance > 0) {
+            // Green color to match breakdown-card.owed
+            balanceAmount.style.color = '#2d5a2d'; // --success-dark
+            balanceAmount.style.fontWeight = '800';
+        } else {
+            // Gray color for zero balance
+            balanceAmount.style.color = '#555555'; // --gray
+            balanceAmount.style.fontWeight = '700';
+        }
+    }
+    
+    // Update breakdown cards
+    const oweAmount = document.querySelector('.breakdown-card.owe .amount');
+    if (oweAmount) {
+        oweAmount.textContent = `$${balanceData.owed_by_me.toFixed(2)}`;
+    }
+    
+    const owedAmount = document.querySelector('.breakdown-card.owed .amount');
+    if (owedAmount) {
+        owedAmount.textContent = `$${balanceData.owed_to_me.toFixed(2)}`;
+    }
+}
+
+function displayBalanceError() {
+    // Show error state or keep placeholder data
+    console.warn('Using placeholder balance data due to API error');
+    // The HTML already has placeholder values, so we don't need to change anything
 }
 
 function addLogoutButton() {
@@ -298,7 +395,6 @@ function handleAddExpense() {
         note: document.getElementById('expenseNote').value
     };
     
-    console.log('Adding expense:', expenseData);
     
     // TODO: Send to backend API
     // For now, just close the modal
@@ -320,7 +416,6 @@ function handleSettleExpense() {
         note: document.getElementById('settleNote').value
     };
     
-    console.log('Recording payment:', settleData);
     
     // TODO: Send to backend API
     // For now, just close the modal

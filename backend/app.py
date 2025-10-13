@@ -5,6 +5,7 @@ import sqlite3
 import bcrypt
 from datetime import datetime
 import jwt
+from crud import get_net_balances, get_user_balances
 
 # instance of Flask
 app = Flask(__name__)
@@ -213,6 +214,167 @@ def verify_token():
         return jsonify({'error': 'Token expired'}), 401
     except jwt.InvalidTokenError:
         return jsonify({'error': 'Invalid token'}), 401
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/balance', methods=['GET'])
+def get_balance():
+    """
+    Get user balance information
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization token required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        # Get user's net balance
+        net_balances = get_net_balances()
+        user_balance = net_balances.get(user_id, 0.0)
+        
+        # Get detailed balances for this user
+        user_balances = get_user_balances(user_id)
+        
+        # Calculate amounts owed and owed to user
+        owed_by_me = 0.0  # Amount I owe to others
+        owed_to_me = 0.0  # Amount others owe me
+        
+        for lender, borrower, amount in user_balances:
+            if borrower == user_id:
+                owed_by_me += amount  # I owe this amount
+            elif lender == user_id:
+                owed_to_me += amount  # Others owe me this amount
+        
+        return jsonify({
+            'net_balance': round(user_balance, 2),
+            'owed_by_me': round(owed_by_me, 2),
+            'owed_to_me': round(owed_to_me, 2),
+            'user_id': user_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/activity', methods=['GET'])
+def get_recent_activity():
+    """
+    Get recent activity for the user (expenses and payments from their groups)
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization token required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        # Get user's groups
+        conn = get_db_connection()
+        user_groups = conn.execute(
+            'SELECT group_id FROM members WHERE user_id = ? AND deleted_at IS NULL', (user_id,)
+        ).fetchall()
+        
+        if not user_groups:
+            conn.close()
+            return jsonify({'activities': []}), 200
+        
+        group_ids = [group['group_id'] for group in user_groups]
+        
+        # Get recent expenses from user's groups
+        placeholders = ','.join(['?' for _ in group_ids])
+        expenses_query = f"""
+            SELECT e.expense_id, e.group_id, e.description, e.amount, e.paid_by, e.created_at,
+                   u.username as paid_by_name, g.group_name
+            FROM expenses e
+            JOIN users u ON e.paid_by = u.id
+            JOIN groups g ON e.group_id = g.group_id
+            WHERE e.group_id IN ({placeholders})
+            ORDER BY e.created_at DESC
+            LIMIT 20
+        """
+        
+        expenses = conn.execute(expenses_query, group_ids).fetchall()
+        
+        # Get recent payments involving the user
+        payments_query = """
+            SELECT p.payment_id, p.paid_by, p.paid_to, p.amount, p.paid_at,
+                   u1.username as paid_by_name, u2.username as paid_to_name
+            FROM payments p
+            JOIN users u1 ON p.paid_by = u1.id
+            JOIN users u2 ON p.paid_to = u2.id
+            WHERE p.paid_by = ? OR p.paid_to = ?
+            ORDER BY p.paid_at DESC
+            LIMIT 20
+        """
+        
+        payments = conn.execute(payments_query, (user_id, user_id)).fetchall()
+        
+        conn.close()
+        
+        # Format activities
+        activities = []
+        
+        # Add expenses
+        for expense in expenses:
+            activities.append({
+                'id': f"expense_{expense['expense_id']}",
+                'type': 'expense',
+                'description': expense['description'],
+                'amount': float(expense['amount']),
+                'paid_by': expense['paid_by_name'],
+                'paid_by_id': expense['paid_by'],
+                'group_name': expense['group_name'],
+                'group_id': expense['group_id'],
+                'date': expense['created_at'],
+                'is_my_expense': expense['paid_by'] == user_id
+            })
+        
+        # Add payments
+        for payment in payments:
+            activities.append({
+                'id': f"payment_{payment['payment_id']}",
+                'type': 'payment',
+                'description': f"Payment from {payment['paid_by_name']} to {payment['paid_to_name']}",
+                'amount': float(payment['amount']),
+                'paid_by': payment['paid_by_name'],
+                'paid_by_id': payment['paid_by'],
+                'paid_to': payment['paid_to_name'],
+                'paid_to_id': payment['paid_to'],
+                'date': payment['paid_at'],
+                'is_my_payment': payment['paid_by'] == user_id or payment['paid_to'] == user_id
+            })
+        
+        # Sort all activities by date (most recent first)
+        activities.sort(key=lambda x: x['date'], reverse=True)
+        
+        # Limit to 20 most recent activities
+        activities = activities[:20]
+        
+        return jsonify({
+            'activities': activities,
+            'user_id': user_id
+        }), 200
+        
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
