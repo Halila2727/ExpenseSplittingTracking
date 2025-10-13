@@ -1,42 +1,78 @@
 <!DOCTYPE html>
+<html>
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- <title>Centsible - Expense Tracking & Splitting</title> -->
+    <title>Centsible - About Us</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .about-paragraph-header {
+            font-weight: bold;
+            font-size: 20px;
+            text-decoration-line: underline;
+            margin: auto;
+            text-align:center;
+            width: 50%;
+            margin-top:80px;
+        }
+        .about-section {
+            margin: auto;
+            width: 30%;
+            margin-top:50px;
+        }
+    </style>
 </head>
 <body>
     <header>
         <div class="container">
             <nav>
                 <div class="logo">
+                    <img src="images/CentsibleLogoNoText.png" alt="Centsible Logo" class="logo-image">
                     Centsible
                 </div>
                 <ul class="nav-links">
                     <li><a href="index.html">Home</a></li>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#how-it-works">How It Works</a></li>
-                    <li><a href="about.html">About Us</a></li>
+                    <!--<li><a href="about.html">About Us</a></li>-->   <!--Don't think we need to link to the same page -->
                     <li><a href="#" class="btn">Get Started</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <p class = "about-paragraph-header">About us</p>
+    <!-- Commented out old code, not sure how we want it formatted-->
+    <!--<div>
+        <p class="about-paragraph-header">About Us</p>
+        <section class="about-section">
+            <p class="about-text">
+            <p>We want to provide the best service possible for our customers.</p>
+            <p>Centsible was founded with the mission of simplifying personal and group finance management.</p>
+            <p>We believe managing money should be stress-free, transparent, and collaborative.</p>
+            <p>Our platform is built for students, roommates, friends, and families who share expenses regularly.</p>
+            <p>We are committed to user privacy, data security, and a seamless user experience.</p>
+            <p>Our small, passionate team is constantly working on new features to make expense tracking even easier.</p>
+            <p>We listen closely to user feedback to guide every step of our product development.</p>
+            <p>Transparency, trust, and simplicity are the core values that drive us.</p>
+            <p>We aim to empower people to make smarter financial decisions together.</p>
+        </section>
+    </div>-->
 
-    <section class="about-section">
-        <ul class = "about-list">
-        <li>We want to provide the best service possible for our customers</li>
-        <li>Centsible was founded with the mission of simplifying personal and group finance management.</li>
-        <li>We believe managing money should be stress-free, transparent, and collaborative.</li>
-        <li>Our platform is built for students, roommates, friends, and families who share expenses regularly.</li>
-        <li>We are committed to user privacy, data security, and a seamless user experience.</li>
-        <li>Our small, passionate team is constantly working on new features to make expense tracking even easier.</li>
-        <li>We listen closely to user feedback to guide every step of our product development.</li>
-        <li>Transparency, trust, and simplicity are the core values that drive us.</li>
-        <li>We aim to empower people to make smarter financial decisions together.</li>
-
-    </ul>
-    </section>
+    <div>
+        <h2 class ="about-paragraph-header"> About Us</h2>
+        <p class="about-section">
+            We want to provide the best service possible for our customers.
+            Centsible was founded with the mission of simplifying personal and group finance management.
+            We believe managing money should be stress-free, transparent, and collaborative.
+            Our platform is built for students, roommates, friends, and families who share expenses regularly.
+            We are committed to user privacy, data security, and a seamless user experience.
+            Our small, passionate team is constantly working on new features to make expense tracking even easier.
+            We listen closely to user feedback to guide every step of our product development.
+            Transparency, trust, and simplicity are the core values that drive us.
+            We aim to empower people to make smarter financial decisions together.
+        </p>
+    </div>
 </body>
+</html>
