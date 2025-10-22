@@ -1,8 +1,17 @@
 <header>
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <div class="container">
     <nav>
       <div class="logo">
-        <img src="images/CentsibleLogoNoText.png" alt="Centsible Logo" class="logo-image" width="36" height="36">
+        <model-viewer
+          src="images/Untitled.glb"
+          alt="Centsible Logo"
+          class="logo-image"
+          auto-rotate
+          camera-controls
+          ar
+          style="width: 50px; height: 50px;">
+        </model-viewer>
         <span class="logo-text">Centsible</span>
       </div>
       <ul class="nav-links">
