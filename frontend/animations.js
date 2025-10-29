@@ -18,7 +18,6 @@ for (let i = 0; i < cards.length; i += perRow) {
     scrollTrigger: {
       trigger: row[0],       // trigger when the first card in the row enters
       start: "top 80%",
-      toggleActions: "play none none none"
     },
     opacity: 0,
     y: 50,

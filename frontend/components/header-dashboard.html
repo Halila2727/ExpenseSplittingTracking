@@ -1,3 +1,4 @@
+<html>
 <header>
   <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <div class="container">
@@ -12,13 +13,21 @@
           ar
           style="width: 50px; height: 50px;">
         </model-viewer>
-      <span class="logo-text">Centsible</span>
+        <span class="logo-text">Centsible</span>
       </div>
       <ul class="nav-links">
         <li><a href="index.html">Landing Page</a></li>
         <li><a href="about.html">Account</a></li>
         <li><a href="login.html" id="sign-out-link" class="btn">Sign Out</a></li>
+        <li>
+        <button class="dark-toggle">
+          <span class="moon-icon">☾</span>
+          <span class="sun-icon" style="display:none;">☼</span>
+        </button>
+        </li>
       </ul>
     </nav>
   </div>
 </header>
+<script src="theme-toggle.js" defer></script>
+</html>
