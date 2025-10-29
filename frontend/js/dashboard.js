@@ -286,29 +286,26 @@ function closeModal(modalId) {
 }
 
 function populateModalData(modalId) {
-    // This would normally fetch data from the backend
-    // For now, using placeholder data
-    
     if (modalId === 'addExpenseModal') {
-        // Populate participants
-        const participantsContainer = document.querySelector('#addExpenseModal .participants-container');
-        if (participantsContainer) {
-            const participants = ['Alice', 'Bob', 'Charlie', 'Diana'];
-            participants.forEach((name, index) => {
-                const participantItem = document.createElement('div');
-                participantItem.className = 'participant-item';
-                participantItem.innerHTML = `
-                    <input type="checkbox" id="participant-${index}" value="${name}">
-                    <label for="participant-${index}">${name}</label>
-                `;
-                participantsContainer.appendChild(participantItem);
-            });
+        // Initialize multi-select dropdown
+        initializeMultiSelect();
+        
+        // Add group selection handler
+        const groupSelect = document.getElementById('expenseGroup');
+        if (groupSelect) {
+            groupSelect.addEventListener('change', handleGroupSelection);
         }
         
         // Add split method change handler
         const splitMethod = document.getElementById('expenseSplitMethod');
         if (splitMethod) {
             splitMethod.addEventListener('change', handleSplitMethodChange);
+        }
+        
+        // Set default date to today
+        const dateInput = document.getElementById('expenseDate');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
         }
     } else if (modalId === 'settleExpenseModal') {
         // Populate payer/payee options
@@ -339,12 +336,181 @@ function populateModalData(modalId) {
     }
 }
 
+// Multi-select dropdown functionality
+function initializeMultiSelect() {
+    const multiSelect = document.getElementById('expenseParticipants');
+    if (!multiSelect) return;
+    
+    const trigger = multiSelect.querySelector('.multi-select-trigger');
+    const options = multiSelect.querySelector('.multi-select-options');
+    
+    // Toggle dropdown
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (multiSelect.classList.contains('disabled')) return;
+        
+        multiSelect.classList.toggle('open');
+        options.style.display = multiSelect.classList.contains('open') ? 'block' : 'none';
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function() {
+        multiSelect.classList.remove('open');
+        options.style.display = 'none';
+    });
+    
+    // Prevent dropdown from closing when clicking inside
+    options.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+}
+
+function updateMultiSelect(members, currentUserId) {
+    const multiSelect = document.getElementById('expenseParticipants');
+    if (!multiSelect) return;
+    
+    const options = multiSelect.querySelector('.multi-select-options');
+    const placeholder = multiSelect.querySelector('.multi-select-placeholder');
+    
+    // Clear existing options
+    options.innerHTML = '';
+    
+    // Add member options
+    members.forEach(member => {
+        const option = document.createElement('div');
+        option.className = 'multi-select-option';
+        
+        const isCurrentUser = member.user_id === currentUserId;
+        const checkboxId = `participant-${member.user_id}`;
+        
+        option.innerHTML = `
+            <input type="checkbox" id="${checkboxId}" value="${member.user_id}" ${isCurrentUser ? 'checked' : ''}>
+            <label for="${checkboxId}">${member.username}</label>
+        `;
+        
+        options.appendChild(option);
+        
+        // Add change handler to update placeholder and trigger split method change
+        const checkbox = option.querySelector('input[type="checkbox"]');
+        checkbox.addEventListener('change', function() {
+            updateMultiSelectPlaceholder();
+            // Trigger split method change to update split details
+            handleSplitMethodChange();
+        });
+    });
+    
+    // Update placeholder
+    updateMultiSelectPlaceholder();
+}
+
+function updateMultiSelectPlaceholder() {
+    const multiSelect = document.getElementById('expenseParticipants');
+    if (!multiSelect) return;
+    
+    const placeholder = multiSelect.querySelector('.multi-select-placeholder');
+    const checkedBoxes = multiSelect.querySelectorAll('input[type="checkbox"]:checked');
+    
+    if (checkedBoxes.length === 0) {
+        placeholder.textContent = 'Select participants';
+    } else if (checkedBoxes.length === 1) {
+        const label = multiSelect.querySelector(`label[for="${checkedBoxes[0].id}"]`);
+        placeholder.textContent = label.textContent;
+    } else {
+        placeholder.textContent = `${checkedBoxes.length} participants selected`;
+    }
+}
+
+// Group selection handler
+async function handleGroupSelection() {
+    const groupSelect = document.getElementById('expenseGroup');
+    const payerSelect = document.getElementById('expensePayer');
+    const categorySelect = document.getElementById('expenseCategory');
+    const multiSelect = document.getElementById('expenseParticipants');
+    const splitMethodSelect = document.getElementById('expenseSplitMethod');
+    
+    const groupId = groupSelect.value;
+    
+    if (!groupId) {
+        // Disable dependent fields
+        payerSelect.disabled = true;
+        categorySelect.disabled = true;
+        multiSelect.classList.add('disabled');
+        splitMethodSelect.disabled = true;
+        
+        // Clear options
+        payerSelect.innerHTML = '<option value="">Select payer</option><option value="me">Me</option>';
+        multiSelect.querySelector('.multi-select-options').innerHTML = '';
+        updateMultiSelectPlaceholder();
+        
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/groups/${groupId}/members`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch group members');
+        }
+        
+        const data = await response.json();
+        const members = data.members;
+        
+        // Enable dependent fields
+        payerSelect.disabled = false;
+        categorySelect.disabled = false;
+        multiSelect.classList.remove('disabled');
+        splitMethodSelect.disabled = false;
+        
+        // Populate payer dropdown
+        payerSelect.innerHTML = '<option value="">Select payer</option>';
+        members.forEach(member => {
+            const option = document.createElement('option');
+            option.value = member.user_id;
+            option.textContent = member.username;
+            payerSelect.appendChild(option);
+        });
+        
+        // Set default payer to current user
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        console.log('Current user:', currentUser); // Debug log
+        console.log('Available members:', members); // Debug log
+        
+        const currentUserOption = Array.from(payerSelect.options).find(option => 
+            option.textContent === currentUser.username || option.value == currentUser.id
+        );
+        if (currentUserOption) {
+            payerSelect.value = currentUserOption.value;
+        }
+        
+        // Update multi-select with members
+        updateMultiSelect(members, currentUser.id);
+        
+    } catch (error) {
+        console.error('Failed to load group members:', error);
+        alert('Failed to load group members. Please try again.');
+    }
+}
+
 function handleSplitMethodChange() {
     const splitMethod = document.getElementById('expenseSplitMethod');
     const splitDetails = document.getElementById('splitDetails');
-    const participants = document.querySelectorAll('#addExpenseModal .participant-item input[type="checkbox"]:checked');
+    const multiSelect = document.getElementById('expenseParticipants');
     
-    if (!splitMethod || !splitDetails) return;
+    if (!splitMethod || !splitDetails || !multiSelect) return;
+    
+    // Get selected participants
+    const checkedBoxes = multiSelect.querySelectorAll('input[type="checkbox"]:checked');
+    const participants = Array.from(checkedBoxes).map(checkbox => ({
+        id: checkbox.value,
+        name: checkbox.nextElementSibling.textContent
+    }));
     
     // Clear previous content
     splitDetails.innerHTML = '';
@@ -355,39 +521,44 @@ function handleSplitMethodChange() {
         return;
     }
     
+    if (participants.length === 0) {
+        return;
+    }
+    
     splitDetails.style.display = 'block';
     splitDetails.innerHTML = '<h4>Split Details</h4>';
     
-    participants.forEach((checkbox, index) => {
-        const label = checkbox.nextElementSibling.textContent;
+    participants.forEach((participant, index) => {
         const splitItem = document.createElement('div');
         splitItem.className = 'split-item';
         
-        if (splitMethod.value === 'shares') {
+        if (splitMethod.value === 'percentage') {
             splitItem.innerHTML = `
-                <label>${label}</label>
-                <input type="number" min="1" value="1" placeholder="Shares">
-            `;
-        } else if (splitMethod.value === 'percentage') {
-            splitItem.innerHTML = `
-                <label>${label}</label>
-                <input type="number" min="0" max="100" step="0.01" placeholder="%" class="percentage-input">
+                <label>${participant.name}</label>
+                <input type="number" min="0" max="100" step="0.01" placeholder="%" 
+                       class="percentage-input" data-participant-id="${participant.id}">
             `;
         } else if (splitMethod.value === 'exact') {
             splitItem.innerHTML = `
-                <label>${label}</label>
-                <input type="number" min="0" step="0.01" placeholder="0.00" class="exact-amount-input">
+                <label>${participant.name}</label>
+                <input type="number" min="0" step="0.01" placeholder="0.00" 
+                       class="exact-amount-input" data-participant-id="${participant.id}">
             `;
         }
         
         splitDetails.appendChild(splitItem);
     });
     
-    // Add validation for percentage inputs
+    // Add validation
     if (splitMethod.value === 'percentage') {
         const percentageInputs = splitDetails.querySelectorAll('.percentage-input');
         percentageInputs.forEach(input => {
             input.addEventListener('input', validatePercentages);
+        });
+    } else if (splitMethod.value === 'exact') {
+        const exactInputs = splitDetails.querySelectorAll('.exact-amount-input');
+        exactInputs.forEach(input => {
+            input.addEventListener('input', validateExactAmounts);
         });
     }
 }
@@ -396,10 +567,57 @@ function validatePercentages() {
     const percentageInputs = document.querySelectorAll('.percentage-input');
     const total = Array.from(percentageInputs).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
     
-    if (total > 100) {
-        // Show warning or adjust values
-        console.warn('Total percentage exceeds 100%');
+    // Remove existing validation message
+    const existingValidation = document.querySelector('.split-validation');
+    if (existingValidation) {
+        existingValidation.remove();
     }
+    
+    const validationDiv = document.createElement('div');
+    validationDiv.className = 'split-validation';
+    
+    if (total > 100) {
+        validationDiv.textContent = `Total percentage exceeds 100% (${total.toFixed(2)}%)`;
+        validationDiv.classList.remove('valid');
+    } else if (total < 100) {
+        validationDiv.textContent = `Total percentage is ${total.toFixed(2)}% (need 100%)`;
+        validationDiv.classList.remove('valid');
+    } else {
+        validationDiv.textContent = 'Total percentage is 100% ✓';
+        validationDiv.classList.add('valid');
+    }
+    
+    const splitDetails = document.getElementById('splitDetails');
+    splitDetails.appendChild(validationDiv);
+}
+
+function validateExactAmounts() {
+    const exactInputs = document.querySelectorAll('.exact-amount-input');
+    const total = Array.from(exactInputs).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+    const expenseAmount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+    
+    // Remove existing validation message
+    const existingValidation = document.querySelector('.split-validation');
+    if (existingValidation) {
+        existingValidation.remove();
+    }
+    
+    const validationDiv = document.createElement('div');
+    validationDiv.className = 'split-validation';
+    
+    if (total > expenseAmount) {
+        validationDiv.textContent = `Total amount exceeds expense amount ($${total.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
+        validationDiv.classList.remove('valid');
+    } else if (total < expenseAmount) {
+        validationDiv.textContent = `Total amount is $${total.toFixed(2)} (need $${expenseAmount.toFixed(2)})`;
+        validationDiv.classList.remove('valid');
+    } else {
+        validationDiv.textContent = 'Total amount matches expense amount ✓';
+        validationDiv.classList.add('valid');
+    }
+    
+    const splitDetails = document.getElementById('splitDetails');
+    splitDetails.appendChild(validationDiv);
 }
 
 // Add expense functionality
@@ -448,17 +666,84 @@ async function handleAddExpense() {
         return;
     }
     
-    const expenseData = {
-        amount: parseFloat(document.getElementById('expenseAmount').value),
-        description: document.getElementById('expenseDescription').value,
-        group_id: parseInt(document.getElementById('expenseGroup').value)
-    };
+    // Collect form data
+    const amount = parseFloat(document.getElementById('expenseAmount').value);
+    const description = document.getElementById('expenseDescription').value.trim();
+    const groupId = parseInt(document.getElementById('expenseGroup').value);
+    const paidBy = parseInt(document.getElementById('expensePayer').value);
+    const splitMethod = document.getElementById('expenseSplitMethod').value;
+    const note = document.getElementById('expenseNote').value.trim();
+    const date = document.getElementById('expenseDate').value;
+    const category = document.getElementById('expenseCategory').value;
+    const currency = document.getElementById('expenseCurrency').value;
     
     // Validate required fields
-    if (!expenseData.amount || !expenseData.description || !expenseData.group_id) {
+    if (!amount || !description || !groupId || !paidBy || !splitMethod) {
         alert('Please fill in all required fields');
         return;
     }
+    
+    // Get selected participants
+    const multiSelect = document.getElementById('expenseParticipants');
+    const checkedBoxes = multiSelect.querySelectorAll('input[type="checkbox"]:checked');
+    const participants = Array.from(checkedBoxes).map(checkbox => parseInt(checkbox.value));
+    
+    if (participants.length === 0) {
+        alert('Please select at least one participant');
+        return;
+    }
+    
+    // Calculate split details
+    const splitDetails = {};
+    
+    if (splitMethod === 'equal') {
+        const shareAmount = amount / participants.length;
+        participants.forEach(participantId => {
+            splitDetails[participantId] = shareAmount;
+        });
+    } else if (splitMethod === 'percentage') {
+        const percentageInputs = document.querySelectorAll('.percentage-input');
+        const totalPercentage = Array.from(percentageInputs).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+        
+        if (Math.abs(totalPercentage - 100) > 0.01) {
+            alert('Total percentage must equal 100%');
+            return;
+        }
+        
+        percentageInputs.forEach(input => {
+            const participantId = parseInt(input.dataset.participantId);
+            const percentage = parseFloat(input.value) || 0;
+            splitDetails[participantId] = (amount * percentage) / 100;
+        });
+    } else if (splitMethod === 'exact') {
+        const exactInputs = document.querySelectorAll('.exact-amount-input');
+        const totalAmount = Array.from(exactInputs).reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+        
+        if (Math.abs(totalAmount - amount) > 0.01) {
+            alert('Total exact amounts must equal the expense amount');
+            return;
+        }
+        
+        exactInputs.forEach(input => {
+            const participantId = parseInt(input.dataset.participantId);
+            const exactAmount = parseFloat(input.value) || 0;
+            splitDetails[participantId] = exactAmount;
+        });
+    }
+    
+    const expenseData = {
+        amount: amount,
+        description: description,
+        group_id: groupId,
+        paid_by: paidBy,
+        split_method: splitMethod,
+        participants: participants,
+        split_details: splitDetails,
+        note: note,
+        date: date,
+        category: category,
+        currency: currency
+    };
     
     try {
         const response = await fetch('http://localhost:5000/api/expenses', {
@@ -496,11 +781,12 @@ async function handleSettleExpense() {
     
     const settleData = {
         amount: parseFloat(document.getElementById('settleAmount').value),
-        paid_to: parseInt(document.getElementById('settlePayee').value)
+        paid_to: parseInt(document.getElementById('settlePayee').value),
+        group_id: parseInt(document.getElementById('settleGroup').value)
     };
     
     // Validate required fields
-    if (!settleData.amount || !settleData.paid_to) {
+    if (!settleData.amount || !settleData.paid_to || !settleData.group_id) {
         alert('Please fill in all required fields');
         return;
     }

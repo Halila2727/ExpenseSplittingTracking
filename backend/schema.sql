@@ -38,6 +38,11 @@ CREATE TABLE IF NOT EXISTS expenses (
     description TEXT,
     amount NUMERIC NOT NULL,
     paid_by INTEGER NOT NULL,
+    note TEXT,
+    date TEXT,
+    category TEXT,
+    currency TEXT,
+    split_method TEXT,
     created_at TEXT,
     FOREIGN KEY (group_id) REFERENCES groups(group_id),
     FOREIGN KEY (paid_by) REFERENCES users(id)

@@ -57,7 +57,7 @@
         <div class="form-row">
           <div class="form-group">
             <label for="expenseAmount">Amount *</label>
-            <input type="number" id="expenseAmount" step="0.01" min="0" placeholder="0.00" required>
+            <input type="number" id="expenseAmount" step="1.00" min="0" placeholder="0.00" required>
           </div>
           <div class="form-group">
             <label for="expenseCurrency">Currency</label>
@@ -74,10 +74,18 @@
           <input type="text" id="expenseDescription" placeholder="What was this expense for?" required>
         </div>
 
+        <div class="form-group">
+          <label for="expenseGroup">Group *</label>
+          <select id="expenseGroup" required>
+            <option value="">Select group</option>
+            <!-- Groups will be populated dynamically -->
+          </select>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label for="expensePayer">Paid by *</label>
-            <select id="expensePayer" required>
+            <select id="expensePayer" required disabled>
               <option value="">Select payer</option>
               <option value="me">Me</option>
               <!-- Other group members will be populated dynamically -->
@@ -90,17 +98,8 @@
         </div>
 
         <div class="form-group">
-          <label for="expenseGroup">Group *</label>
-          <select id="expenseGroup" required>
-            <option value="">Select group</option>
-            <option value="general">General</option>
-            <!-- Groups will be populated dynamically -->
-          </select>
-        </div>
-
-        <div class="form-group">
           <label for="expenseCategory">Category</label>
-          <select id="expenseCategory">
+          <select id="expenseCategory" disabled>
             <option value="">Select category</option>
             <option value="food">Food & Dining</option>
             <option value="transport">Transportation</option>
@@ -114,20 +113,23 @@
 
         <div class="form-group">
           <label for="expenseParticipants">Split with *</label>
-          <div class="participants-container">
-            <div class="participant-item">
-              <input type="checkbox" id="participant-me" checked disabled>
-              <label for="participant-me">Me</label>
+          <div class="multi-select-container">
+            <div class="multi-select-dropdown" id="expenseParticipants" disabled>
+              <div class="multi-select-trigger">
+                <span class="multi-select-placeholder">Select participants</span>
+                <span class="multi-select-arrow">▼</span>
+              </div>
+              <div class="multi-select-options" style="display: none;">
+                <!-- Participants will be populated dynamically -->
+              </div>
             </div>
-            <!-- Other participants will be added dynamically -->
           </div>
         </div>
 
         <div class="form-group">
           <label for="expenseSplitMethod">Split method *</label>
-          <select id="expenseSplitMethod" required>
+          <select id="expenseSplitMethod" required disabled>
             <option value="equal">Split equally</option>
-            <option value="shares">Split by shares</option>
             <option value="percentage">Split by percentage</option>
             <option value="exact">Split by exact amount</option>
           </select>

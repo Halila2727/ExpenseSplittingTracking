@@ -82,14 +82,14 @@ def add_sample_data(cursor):
     
     # Sample expenses
     expenses = [
-        (1, "Taxi fare", 45.50, 1, now),
-        (1, "Lunch", 30.00, 2, now),
-        (2, "Dinner", 60.00, 2, now)
+        (1, "Taxi fare", 45.50, 1, "Taxi from airport", now, "transport", "USD", "equal", now),
+        (1, "Lunch", 30.00, 2, "Lunch at restaurant", now, "food", "USD", "equal", now),
+        (2, "Dinner", 60.00, 2, "Dinner with friends", now, "food", "USD", "equal", now)
     ]
     
     cursor.executemany("""
-    INSERT INTO expenses (group_id, description, amount, paid_by, created_at)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO expenses (group_id, description, amount, paid_by, note, date, category, currency, split_method, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, expenses)
     
     # Sample balances

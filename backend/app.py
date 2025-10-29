@@ -85,6 +85,69 @@ def generate_join_code():
         if not existing:
             return code
 
+def consolidate_balances(conn, group_id, lender_id, borrower_id, amount):
+    """
+    Consolidate balances between two users in a group.
+    If a balance already exists, update it. If it would result in 0 or negative,
+    handle the reversal appropriately.
+    """
+    # Check if there's an existing balance in either direction
+    existing_lender_to_borrower = conn.execute(
+        'SELECT balance_id, amount FROM balances WHERE group_id = ? AND lender = ? AND borrower = ?',
+        (group_id, lender_id, borrower_id)
+    ).fetchone()
+    
+    existing_borrower_to_lender = conn.execute(
+        'SELECT balance_id, amount FROM balances WHERE group_id = ? AND lender = ? AND borrower = ?',
+        (group_id, borrower_id, lender_id)
+    ).fetchone()
+    
+    now = datetime.now().isoformat()
+    
+    if existing_lender_to_borrower:
+        # Update existing balance in the same direction
+        new_amount = existing_lender_to_borrower['amount'] + amount
+        if new_amount <= 0:
+            # Delete the balance if it becomes zero or negative
+            conn.execute(
+                'DELETE FROM balances WHERE balance_id = ?',
+                (existing_lender_to_borrower['balance_id'],)
+            )
+        else:
+            # Update the balance
+            conn.execute(
+                'UPDATE balances SET amount = ?, updated_at = ? WHERE balance_id = ?',
+                (new_amount, now, existing_lender_to_borrower['balance_id'])
+            )
+    elif existing_borrower_to_lender:
+        # There's a balance in the opposite direction
+        existing_amount = existing_borrower_to_lender['amount']
+        if amount >= existing_amount:
+            # New amount is greater than or equal to existing, reverse the direction
+            new_amount = amount - existing_amount
+            conn.execute(
+                'DELETE FROM balances WHERE balance_id = ?',
+                (existing_borrower_to_lender['balance_id'],)
+            )
+            if new_amount > 0:
+                conn.execute(
+                    'INSERT INTO balances (group_id, lender, borrower, amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+                    (group_id, lender_id, borrower_id, new_amount, now, now)
+                )
+        else:
+            # New amount is less than existing, reduce the existing balance
+            new_amount = existing_amount - amount
+            conn.execute(
+                'UPDATE balances SET amount = ?, updated_at = ? WHERE balance_id = ?',
+                (new_amount, now, existing_borrower_to_lender['balance_id'])
+            )
+    else:
+        # No existing balance, create new one
+        conn.execute(
+            'INSERT INTO balances (group_id, lender, borrower, amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+            (group_id, lender_id, borrower_id, amount, now, now)
+        )
+
 # Authentication routes
 @app.route('/auth/signup', methods=['POST'])
 def signup():
@@ -421,17 +484,31 @@ def add_expense():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['amount', 'description', 'group_id']
+        required_fields = ['amount', 'description', 'group_id', 'paid_by', 'split_method', 'participants', 'split_details']
         if not data or not all(k in data for k in required_fields):
-            return jsonify({'error': 'Missing required fields: amount, description, group_id'}), 400
+            return jsonify({'error': 'Missing required fields: amount, description, group_id, paid_by, split_method, participants, split_details'}), 400
         
         amount = float(data['amount'])
         description = data['description'].strip()
         group_id = int(data['group_id'])
+        paid_by = int(data['paid_by'])
+        split_method = data['split_method']
+        participants = data['participants']
+        split_details = data['split_details']
+        
+        # Optional fields
+        note = data.get('note', '').strip()
+        date = data.get('date', '')
+        category = data.get('category', '')
+        currency = data.get('currency', 'USD')
         
         # Validate amount
         if amount <= 0:
             return jsonify({'error': 'Amount must be greater than 0'}), 400
+        
+        # Validate split method
+        if split_method not in ['equal', 'percentage', 'exact']:
+            return jsonify({'error': 'Invalid split method'}), 400
         
         # Check if user is member of the group
         conn = get_db_connection()
@@ -444,35 +521,53 @@ def add_expense():
             conn.close()
             return jsonify({'error': 'You are not a member of this group'}), 403
         
-        # Get group members
-        members = conn.execute(
-            'SELECT user_id FROM members WHERE group_id = ? AND deleted_at IS NULL', 
-            (group_id,)
-        ).fetchall()
+        # Check if paid_by is a member of the group
+        payer_membership = conn.execute(
+            'SELECT 1 FROM members WHERE user_id = ? AND group_id = ? AND deleted_at IS NULL', 
+            (paid_by, group_id)
+        ).fetchone()
         
-        if len(members) < 2:
+        if not payer_membership:
             conn.close()
-            return jsonify({'error': 'Group must have at least 2 members to add expenses'}), 400
+            return jsonify({'error': 'The person who paid is not a member of this group'}), 400
+        
+        # Validate participants are all group members
+        for participant_id in participants:
+            participant_membership = conn.execute(
+                'SELECT 1 FROM members WHERE user_id = ? AND group_id = ? AND deleted_at IS NULL', 
+                (participant_id, group_id)
+            ).fetchone()
+            
+            if not participant_membership:
+                conn.close()
+                return jsonify({'error': f'Participant {participant_id} is not a member of this group'}), 400
+        
+        # Validate split details match participants
+        if len(split_details) != len(participants):
+            conn.close()
+            return jsonify({'error': 'Split details must match number of participants'}), 400
+        
+        # Validate split details sum equals amount (with small tolerance for rounding)
+        total_split = sum(float(amount) for amount in split_details.values())
+        if abs(total_split - amount) > 0.01:
+            conn.close()
+            return jsonify({'error': 'Split details must sum to the total amount'}), 400
         
         # Add expense
         now = datetime.now().isoformat()
         cursor = conn.execute(
-            'INSERT INTO expenses (group_id, description, amount, paid_by, created_at) VALUES (?, ?, ?, ?, ?)',
-            (group_id, description, amount, user_id, now)
+            'INSERT INTO expenses (group_id, description, amount, paid_by, note, date, category, currency, split_method, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (group_id, description, amount, paid_by, note, date, category, currency, split_method, now)
         )
         
         expense_id = cursor.lastrowid
         
-        # Split expense equally among all members (excluding the payer)
-        share_amount = round(amount / len(members), 2)
-        
-        for member in members:
-            member_id = member['user_id']
-            if member_id != user_id:  # Don't create balance for the person who paid
-                conn.execute(
-                    'INSERT INTO balances (group_id, lender, borrower, amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-                    (group_id, user_id, member_id, share_amount, now, now)
-                )
+        # Create balances based on split details using consolidation
+        for participant_id in participants:
+            participant_id = int(participant_id)
+            if participant_id != paid_by:  # Don't create balance for the person who paid
+                share_amount = float(split_details[str(participant_id)])
+                consolidate_balances(conn, group_id, paid_by, participant_id, share_amount)
         
         conn.commit()
         conn.close()
@@ -483,13 +578,16 @@ def add_expense():
             'amount': amount,
             'description': description,
             'group_id': group_id,
-            'paid_by': user_id
+            'paid_by': paid_by,
+            'split_method': split_method,
+            'note': note
         }), 201
         
     except ValueError as e:
-        return jsonify({'error': 'Invalid amount or group_id format'}), 400
+        return jsonify({'error': f'Invalid data format: {str(e)}'}), 400
     except Exception as e:
-        return jsonify({'error': 'Internal server error'}), 500
+        print(f"Error in add_expense: {str(e)}")  # Add logging for debugging
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @app.route('/api/payments', methods=['POST'])
 def record_payment():
@@ -516,12 +614,13 @@ def record_payment():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['amount', 'paid_to']
+        required_fields = ['amount', 'paid_to', 'group_id']
         if not data or not all(k in data for k in required_fields):
-            return jsonify({'error': 'Missing required fields: amount, paid_to'}), 400
+            return jsonify({'error': 'Missing required fields: amount, paid_to, group_id'}), 400
         
         amount = float(data['amount'])
         paid_to = int(data['paid_to'])
+        group_id = int(data['group_id'])
         
         # Validate amount
         if amount <= 0:
@@ -531,15 +630,22 @@ def record_payment():
         if paid_to == user_id:
             return jsonify({'error': 'Cannot pay yourself'}), 400
         
-        # Check if recipient exists
+        # Check if both users are members of the group
         conn = get_db_connection()
-        recipient = conn.execute(
-            'SELECT id FROM users WHERE id = ?', (paid_to,)
+        
+        payer_membership = conn.execute(
+            'SELECT 1 FROM members WHERE user_id = ? AND group_id = ? AND deleted_at IS NULL', 
+            (user_id, group_id)
         ).fetchone()
         
-        if not recipient:
+        recipient_membership = conn.execute(
+            'SELECT 1 FROM members WHERE user_id = ? AND group_id = ? AND deleted_at IS NULL', 
+            (paid_to, group_id)
+        ).fetchone()
+        
+        if not payer_membership or not recipient_membership:
             conn.close()
-            return jsonify({'error': 'Recipient user not found'}), 404
+            return jsonify({'error': 'Both users must be members of the group'}), 403
         
         # Record payment
         now = datetime.now().isoformat()
@@ -550,52 +656,9 @@ def record_payment():
         
         payment_id = cursor.lastrowid
         
-        # Update balances - net out in both directions
-        # Check both possible balance directions
-        
-        # Direction 1: Payer owes recipient (paid_to is lender, user_id is borrower)
-        balance1 = conn.execute(
-            'SELECT amount FROM balances WHERE lender = ? AND borrower = ?', 
-            (paid_to, user_id)
-        ).fetchone()
-        
-        # Direction 2: Recipient owes payer (user_id is lender, paid_to is borrower)
-        balance2 = conn.execute(
-            'SELECT amount FROM balances WHERE lender = ? AND borrower = ?', 
-            (user_id, paid_to)
-        ).fetchone()
-        
-        if balance1:
-            # Payer has an existing debt to recipient
-            current_amount = balance1['amount']
-            new_amount = max(0, current_amount - amount)
-            
-            if new_amount > 0:
-                conn.execute(
-                    'UPDATE balances SET amount = ?, updated_at = ? WHERE lender = ? AND borrower = ?',
-                    (new_amount, now, paid_to, user_id)
-                )
-            else:
-                # Balance fully paid off
-                conn.execute(
-                    'DELETE FROM balances WHERE lender = ? AND borrower = ?',
-                    (paid_to, user_id)
-                )
-        elif balance2:
-            # Recipient owes the payer, payment increases this debt
-            current_amount = balance2['amount']
-            new_amount = current_amount + amount
-            
-            conn.execute(
-                'UPDATE balances SET amount = ?, updated_at = ? WHERE lender = ? AND borrower = ?',
-                (new_amount, now, user_id, paid_to)
-            )
-        else:
-            # No existing balance, create one where recipient owes payer
-            conn.execute(
-                'INSERT INTO balances (group_id, lender, borrower, amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (0, user_id, paid_to, amount, now, now)
-            )
+        # Use consolidation function to handle balance updates
+        # Payment reduces debt from payer to recipient (paid_to is lender, user_id is borrower)
+        consolidate_balances(conn, group_id, paid_to, user_id, -amount)
         
         conn.commit()
         conn.close()
@@ -670,6 +733,69 @@ def get_user_groups():
         return jsonify({
             'groups': groups_list,
             'user_id': user_id
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/groups/<int:group_id>/members', methods=['GET'])
+def get_group_members(group_id):
+    """
+    Get all members of a specific group
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization token required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        conn = get_db_connection()
+        
+        # Check if user is member of the group
+        membership = conn.execute(
+            'SELECT 1 FROM members WHERE user_id = ? AND group_id = ? AND deleted_at IS NULL', 
+            (user_id, group_id)
+        ).fetchone()
+        
+        if not membership:
+            conn.close()
+            return jsonify({'error': 'You are not a member of this group'}), 403
+        
+        # Get group members with user details
+        members_query = """
+            SELECT u.id, u.username, u.email
+            FROM users u
+            INNER JOIN members m ON u.id = m.user_id
+            WHERE m.group_id = ? AND m.deleted_at IS NULL
+            ORDER BY u.username
+        """
+        
+        members = conn.execute(members_query, (group_id,)).fetchall()
+        
+        conn.close()
+        
+        members_list = []
+        for member in members:
+            members_list.append({
+                'user_id': member['id'],
+                'username': member['username'],
+                'email': member['email']
+            })
+        
+        return jsonify({
+            'members': members_list,
+            'group_id': group_id
         }), 200
         
     except Exception as e:
