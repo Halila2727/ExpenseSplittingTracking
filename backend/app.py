@@ -614,28 +614,35 @@ def record_payment():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['amount', 'paid_to', 'group_id']
+        required_fields = ['amount', 'paid_by', 'paid_to', 'group_id', 'description']
         if not data or not all(k in data for k in required_fields):
-            return jsonify({'error': 'Missing required fields: amount, paid_to, group_id'}), 400
+            return jsonify({'error': 'Missing required fields: amount, paid_by, paid_to, group_id, description'}), 400
         
         amount = float(data['amount'])
+        paid_by = int(data['paid_by'])
         paid_to = int(data['paid_to'])
         group_id = int(data['group_id'])
+        description = data['description'].strip()
+        currency = data.get('currency', 'USD')
         
         # Validate amount
         if amount <= 0:
             return jsonify({'error': 'Amount must be greater than 0'}), 400
         
+        # Validate description is not empty
+        if not description:
+            return jsonify({'error': 'Description is required'}), 400
+        
         # Can't pay yourself
-        if paid_to == user_id:
+        if paid_by == paid_to:
             return jsonify({'error': 'Cannot pay yourself'}), 400
         
-        # Check if both users are members of the group
         conn = get_db_connection()
         
+        # Check if both users are members of the group
         payer_membership = conn.execute(
             'SELECT 1 FROM members WHERE user_id = ? AND group_id = ? AND deleted_at IS NULL', 
-            (user_id, group_id)
+            (paid_by, group_id)
         ).fetchone()
         
         recipient_membership = conn.execute(
@@ -647,18 +654,37 @@ def record_payment():
             conn.close()
             return jsonify({'error': 'Both users must be members of the group'}), 403
         
+        # Check if debt exists from paid_by to paid_to in this group
+        # In the balances table, lender is the person who is owed money, borrower is the person who owes
+        # So we need to check: paid_to (lender) is owed money by paid_by (borrower)
+        balance_check = conn.execute(
+            'SELECT amount FROM balances WHERE group_id = ? AND lender = ? AND borrower = ?',
+            (group_id, paid_to, paid_by)
+        ).fetchone()
+        
+        if not balance_check or balance_check['amount'] <= 0:
+            conn.close()
+            return jsonify({'error': 'No debt exists from the specified payer to the specified recipient in this group'}), 400
+        
+        existing_debt = float(balance_check['amount'])
+        
+        # Validate payment amount doesn't exceed debt
+        if amount > existing_debt:
+            conn.close()
+            return jsonify({'error': f'Payment amount (${amount:.2f}) exceeds existing debt (${existing_debt:.2f})'}), 400
+        
         # Record payment
         now = datetime.now().isoformat()
         cursor = conn.execute(
-            'INSERT INTO payments (paid_by, paid_to, amount, paid_at) VALUES (?, ?, ?, ?)',
-            (user_id, paid_to, amount, now)
+            'INSERT INTO payments (paid_by, paid_to, amount, paid_at, description, currency, group_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            (paid_by, paid_to, amount, now, description, currency, group_id)
         )
         
         payment_id = cursor.lastrowid
         
         # Use consolidation function to handle balance updates
-        # Payment reduces debt from payer to recipient (paid_to is lender, user_id is borrower)
-        consolidate_balances(conn, group_id, paid_to, user_id, -amount)
+        # Payment reduces debt from payer to recipient (paid_to is lender, paid_by is borrower)
+        consolidate_balances(conn, group_id, paid_to, paid_by, -amount)
         
         conn.commit()
         conn.close()
@@ -667,14 +693,18 @@ def record_payment():
             'message': 'Payment recorded successfully',
             'payment_id': payment_id,
             'amount': amount,
-            'paid_by': user_id,
-            'paid_to': paid_to
+            'paid_by': paid_by,
+            'paid_to': paid_to,
+            'group_id': group_id,
+            'description': description,
+            'currency': currency
         }), 201
         
     except ValueError as e:
         return jsonify({'error': 'Invalid amount or user_id format'}), 400
     except Exception as e:
-        return jsonify({'error': 'Internal server error'}), 500
+        print(f"Error in record_payment: {str(e)}")  # Add logging for debugging
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
 
 @app.route('/api/groups', methods=['GET'])
 def get_user_groups():
