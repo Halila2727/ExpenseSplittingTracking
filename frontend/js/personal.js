@@ -128,17 +128,10 @@ async function loadPersonalData() {
 
 function updatePersonalStats(groups) {
     const totalGroups = document.getElementById('total-groups');
-    const totalExpenses = document.getElementById('total-expenses');
     const memberSince = document.getElementById('member-since');
     
     if (totalGroups) {
         totalGroups.textContent = groups.length;
-    }
-    
-    if (totalExpenses) {
-        // This would need to be calculated from actual expense data
-        // For now, showing placeholder
-        totalExpenses.textContent = '0';
     }
     
     if (memberSince) {
@@ -226,13 +219,17 @@ function createPersonalActivityElement(activity) {
     // Add color based on whether it's user's activity
     if (activity.type === 'expense') {
         if (activity.is_my_expense) {
-            amount.classList.add('negative');
+            amount.classList.add('negative'); // User paid, so it's money out (red)
+        } else if (activity.is_involved) {
+            amount.classList.add('negative'); // User owes money, so it's money out (red)
         } else {
-            amount.classList.add('positive');
+            amount.classList.add('positive'); // Someone else paid, so it's money in (green)
         }
     } else {
         if (activity.is_my_payment) {
-            amount.classList.add('negative');
+            amount.classList.add('negative'); // User paid, so it's money out (red)
+        } else if (activity.is_paid_to_me) {
+            amount.classList.add('positive'); // User received payment, so it's money in (green)
         } else {
             amount.classList.add('positive');
         }

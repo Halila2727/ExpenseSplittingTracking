@@ -52,7 +52,7 @@ class ComponentLoader {
     const filename = window.location.pathname.split('/').pop();
     
     const isAuthPage = /^(login|signup)\.html$/.test(filename);
-    const isDashboard = /^(dashboard|activity|groups|personal)\.html$/.test(filename);
+    const isDashboard = /^(dashboard|activity|groups|personal|group-details)\.html$/.test(filename);
     
     const headerFile = isDashboard
       ? 'components/header-dashboard.html'

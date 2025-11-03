@@ -197,12 +197,16 @@ function createActivityElement(activity) {
     if (activity.type === 'expense') {
         if (activity.is_my_expense) {
             status.textContent = 'you paid';
+        } else if (activity.is_involved) {
+            status.textContent = 'they paid';
         } else {
             status.textContent = 'not involved';
         }
     } else {
         if (activity.is_my_payment) {
             status.textContent = 'you paid';
+        } else if (activity.is_paid_to_me) {
+            status.textContent = 'you were paid';
         } else {
             status.textContent = 'not involved';
         }
@@ -216,15 +220,19 @@ function createActivityElement(activity) {
     // Add color based on whether it's user's activity
     if (activity.type === 'expense') {
         if (activity.is_my_expense) {
-            amount.classList.add('negative'); // User paid, so it's money out
+            amount.classList.add('negative'); // User paid, so it's money out (red)
+        } else if (activity.is_involved) {
+            amount.classList.add('negative'); // User owes money, so it's money out (red)
         } else {
-            amount.classList.add('positive'); // Someone else paid, so it's money in
+            amount.classList.add('positive'); // Someone else paid, so it's money in (green)
         }
     } else {
         if (activity.is_my_payment) {
-            amount.classList.add('negative'); // User was involved in payment
+            amount.classList.add('negative'); // User paid, so it's money out (red)
+        } else if (activity.is_paid_to_me) {
+            amount.classList.add('positive'); // User received payment, so it's money in (green)
         } else {
-            amount.classList.add('positive'); // User received payment
+            amount.classList.add('positive'); // Not directly involved
         }
     }
     

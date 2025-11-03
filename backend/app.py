@@ -382,33 +382,40 @@ def get_recent_activity():
         group_ids = [group['group_id'] for group in user_groups]
         
         # Get recent expenses from user's groups
+        # Use LEFT JOIN with balances to check if user owes money from each expense
         placeholders = ','.join(['?' for _ in group_ids])
         expenses_query = f"""
             SELECT e.expense_id, e.group_id, e.description, e.amount, e.paid_by, e.created_at,
-                   u.username as paid_by_name, g.group_name
+                   u.username as paid_by_name, g.group_name,
+                   CASE WHEN b.balance_id IS NOT NULL THEN 1 ELSE 0 END as user_owes
             FROM expenses e
             JOIN users u ON e.paid_by = u.id
             JOIN groups g ON e.group_id = g.group_id
+            LEFT JOIN balances b ON e.group_id = b.group_id 
+                AND e.paid_by = b.lender 
+                AND b.borrower = ?
+                AND b.amount > 0
             WHERE e.group_id IN ({placeholders})
             ORDER BY e.created_at DESC
             LIMIT 20
         """
         
-        expenses = conn.execute(expenses_query, group_ids).fetchall()
+        expenses = conn.execute(expenses_query, [user_id] + group_ids).fetchall()
         
-        # Get recent payments involving the user
-        payments_query = """
-            SELECT p.payment_id, p.paid_by, p.paid_to, p.amount, p.paid_at,
-                   u1.username as paid_by_name, u2.username as paid_to_name
+        # Get recent payments involving the user from their groups
+        payments_query = f"""
+            SELECT p.payment_id, p.paid_by, p.paid_to, p.amount, p.paid_at, p.group_id,
+                   u1.username as paid_by_name, u2.username as paid_to_name, g.group_name
             FROM payments p
             JOIN users u1 ON p.paid_by = u1.id
             JOIN users u2 ON p.paid_to = u2.id
-            WHERE p.paid_by = ? OR p.paid_to = ?
+            JOIN groups g ON p.group_id = g.group_id
+            WHERE (p.paid_by = ? OR p.paid_to = ?) AND p.group_id IN ({placeholders})
             ORDER BY p.paid_at DESC
             LIMIT 20
         """
         
-        payments = conn.execute(payments_query, (user_id, user_id)).fetchall()
+        payments = conn.execute(payments_query, [user_id, user_id] + group_ids).fetchall()
         
         conn.close()
         
@@ -417,6 +424,9 @@ def get_recent_activity():
         
         # Add expenses
         for expense in expenses:
+            is_paid_by_me = expense['paid_by'] == user_id
+            is_involved = is_paid_by_me or expense['user_owes'] == 1
+            
             activities.append({
                 'id': f"expense_{expense['expense_id']}",
                 'type': 'expense',
@@ -427,7 +437,8 @@ def get_recent_activity():
                 'group_name': expense['group_name'],
                 'group_id': expense['group_id'],
                 'date': expense['created_at'],
-                'is_my_expense': expense['paid_by'] == user_id
+                'is_my_expense': is_paid_by_me,
+                'is_involved': is_involved
             })
         
         # Add payments
@@ -442,7 +453,10 @@ def get_recent_activity():
                 'paid_to': payment['paid_to_name'],
                 'paid_to_id': payment['paid_to'],
                 'date': payment['paid_at'],
-                'is_my_payment': payment['paid_by'] == user_id or payment['paid_to'] == user_id
+                'group_name': payment['group_name'],
+                'group_id': payment['group_id'],
+                'is_my_payment': payment['paid_by'] == user_id,
+                'is_paid_to_me': payment['paid_to'] == user_id
             })
         
         # Sort all activities by date (most recent first)
@@ -1145,6 +1159,20 @@ def get_group_activity(group_id):
         
         expenses = conn.execute(expenses_query, (group_id,)).fetchall()
         
+        # Get recent payments for this group
+        payments_query = """
+            SELECT p.payment_id, p.paid_by, p.paid_to, p.amount, p.paid_at,
+                   u1.username as paid_by_name, u2.username as paid_to_name
+            FROM payments p
+            JOIN users u1 ON p.paid_by = u1.id
+            JOIN users u2 ON p.paid_to = u2.id
+            WHERE p.group_id = ?
+            ORDER BY p.paid_at DESC
+            LIMIT 20
+        """
+        
+        payments = conn.execute(payments_query, (group_id,)).fetchall()
+        
         conn.close()
         
         # Format activities
@@ -1161,6 +1189,22 @@ def get_group_activity(group_id):
                 'paid_by_id': expense['paid_by'],
                 'date': expense['created_at'],
                 'is_my_expense': expense['paid_by'] == user_id
+            })
+        
+        # Add payments
+        for payment in payments:
+            activities.append({
+                'id': f"payment_{payment['payment_id']}",
+                'type': 'payment',
+                'description': f"Payment from {payment['paid_by_name']} to {payment['paid_to_name']}",
+                'amount': float(payment['amount']),
+                'paid_by': payment['paid_by_name'],
+                'paid_by_id': payment['paid_by'],
+                'paid_to': payment['paid_to_name'],
+                'paid_to_id': payment['paid_to'],
+                'date': payment['paid_at'],
+                'is_my_payment': payment['paid_by'] == user_id,
+                'is_paid_to_me': payment['paid_to'] == user_id
             })
         
         # Sort by date (most recent first)
