@@ -267,11 +267,20 @@ function createActivityElement(activity) {
         year: 'numeric'
     });
     
+    let description, meta;
+    if (activity.type === 'expense') {
+        description = activity.description;
+        meta = `Paid by ${activity.paid_by} • ${formattedDate}`;
+    } else {
+        description = `Payment from ${activity.paid_by} to ${activity.paid_to}`;
+        meta = `${formattedDate}`;
+    }
+    
     element.innerHTML = `
-        <div class="activity-icon expense">💰</div>
+        <div class="activity-icon ${activity.type}">${activity.type === 'expense' ? '💰' : '💵'}</div>
         <div class="activity-content">
-            <div class="activity-description">${activity.description}</div>
-            <div class="activity-meta">Paid by ${activity.paid_by} • ${formattedDate}</div>
+            <div class="activity-description">${description}</div>
+            <div class="activity-meta">${meta}</div>
         </div>
         <div class="activity-amount">$${activity.amount.toFixed(2)}</div>
     `;
