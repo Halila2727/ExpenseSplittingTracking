@@ -168,7 +168,7 @@
         <div class="form-row">
           <div class="form-group">
             <label for="settleAmount">Amount *</label>
-            <input type="number" id="settleAmount" step="0.01" min="0" placeholder="0.00" required>
+            <input type="number" id="settleAmount" step="1.00" min="0" placeholder="0.00" required>
           </div>
           <div class="form-group">
             <label for="settleCurrency">Currency</label>
@@ -180,35 +180,32 @@
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="settlePayer">Paid by *</label>
-            <select id="settlePayer" required>
-              <option value="">Select payer</option>
-              <option value="me">Me</option>
-              <!-- Other group members will be populated dynamically -->
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="settlePayee">Paid to *</label>
-            <select id="settlePayee" required>
-              <option value="">Select payee</option>
-              <!-- Group members will be populated dynamically -->
-            </select>
-          </div>
+        <div class="form-group">
+          <label for="settleDescription">Description *</label>
+          <input type="text" id="settleDescription" placeholder="What is this payment for?" required>
+        </div>
+
+        <div class="form-group">
+          <label for="settleGroup">Group *</label>
+          <select id="settleGroup" required>
+            <option value="">Select group</option>
+            <!-- Groups will be populated dynamically -->
+          </select>
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="settleDate">Date *</label>
-            <input type="date" id="settleDate" required>
+            <label for="settlePayer">Paid by *</label>
+            <select id="settlePayer" required disabled>
+              <option value="">Select payer</option>
+              <!-- Group members will be populated dynamically -->
+            </select>
           </div>
           <div class="form-group">
-            <label for="settleGroup">Group *</label>
-            <select id="settleGroup" required>
-              <option value="">Select group</option>
-              <option value="general">General</option>
-              <!-- Groups will be populated dynamically -->
+            <label for="settlePayee">Paid to *</label>
+            <select id="settlePayee" required disabled>
+              <option value="">Select payee</option>
+              <!-- Group members will be populated dynamically -->
             </select>
           </div>
         </div>

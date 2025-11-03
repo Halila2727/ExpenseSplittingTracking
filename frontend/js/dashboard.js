@@ -282,6 +282,20 @@ function closeModal(modalId) {
         if (form) {
             form.reset();
         }
+        
+        // Reset disabled state for settle expense modal
+        if (modalId === 'settleExpenseModal') {
+            const payerSelect = document.getElementById('settlePayer');
+            const payeeSelect = document.getElementById('settlePayee');
+            if (payerSelect) {
+                payerSelect.disabled = true;
+                payerSelect.innerHTML = '<option value="">Select payer</option>';
+            }
+            if (payeeSelect) {
+                payeeSelect.disabled = true;
+                payeeSelect.innerHTML = '<option value="">Select payee</option>';
+            }
+        }
     }
 }
 
@@ -308,30 +322,27 @@ function populateModalData(modalId) {
             dateInput.value = new Date().toISOString().split('T')[0];
         }
     } else if (modalId === 'settleExpenseModal') {
-        // Populate payer/payee options
-        const members = ['Me', 'Alice', 'Bob', 'Charlie', 'Diana'];
-        
-        const payerSelect = document.getElementById('settlePayer');
-        const payeeSelect = document.getElementById('settlePayee');
-        
-        if (payerSelect) {
-            payerSelect.innerHTML = '<option value="">Select payer</option>';
-            members.forEach(member => {
-                const option = document.createElement('option');
-                option.value = member.toLowerCase();
-                option.textContent = member;
-                payerSelect.appendChild(option);
-            });
+        // Add group selection handler (remove old listeners first)
+        const groupSelect = document.getElementById('settleGroup');
+        if (groupSelect) {
+            // Clone to remove existing event listeners
+            const newGroupSelect = groupSelect.cloneNode(true);
+            groupSelect.parentNode.replaceChild(newGroupSelect, groupSelect);
+            // Add the event listener to the new element
+            const updatedGroupSelect = document.getElementById('settleGroup');
+            updatedGroupSelect.addEventListener('change', handleSettleGroupSelection);
         }
         
+        // Reset disabled state of payer/payee dropdowns
+        const payerSelect = document.getElementById('settlePayer');
+        const payeeSelect = document.getElementById('settlePayee');
+        if (payerSelect) {
+            payerSelect.disabled = true;
+            payerSelect.innerHTML = '<option value="">Select payer</option>';
+        }
         if (payeeSelect) {
+            payeeSelect.disabled = true;
             payeeSelect.innerHTML = '<option value="">Select payee</option>';
-            members.forEach(member => {
-                const option = document.createElement('option');
-                option.value = member.toLowerCase();
-                option.textContent = member;
-                payeeSelect.appendChild(option);
-            });
         }
     }
 }
@@ -417,6 +428,80 @@ function updateMultiSelectPlaceholder() {
         placeholder.textContent = label.textContent;
     } else {
         placeholder.textContent = `${checkedBoxes.length} participants selected`;
+    }
+}
+
+// Settle expense group selection handler
+async function handleSettleGroupSelection() {
+    const groupSelect = document.getElementById('settleGroup');
+    const payerSelect = document.getElementById('settlePayer');
+    const payeeSelect = document.getElementById('settlePayee');
+    
+    const groupId = groupSelect.value;
+    
+    if (!groupId) {
+        // Disable dependent fields
+        payerSelect.disabled = true;
+        payeeSelect.disabled = true;
+        
+        // Clear options
+        payerSelect.innerHTML = '<option value="">Select payer</option>';
+        payeeSelect.innerHTML = '<option value="">Select payee</option>';
+        
+        return;
+    }
+    
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`http://localhost:5000/api/groups/${groupId}/members`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch group members');
+        }
+        
+        const data = await response.json();
+        const members = data.members;
+        
+        // Enable dependent fields
+        payerSelect.disabled = false;
+        payeeSelect.disabled = false;
+        
+        // Populate payer dropdown
+        payerSelect.innerHTML = '<option value="">Select payer</option>';
+        members.forEach(member => {
+            const option = document.createElement('option');
+            option.value = member.user_id;
+            option.textContent = member.username;
+            payerSelect.appendChild(option);
+        });
+        
+        // Populate payee dropdown
+        payeeSelect.innerHTML = '<option value="">Select payee</option>';
+        members.forEach(member => {
+            const option = document.createElement('option');
+            option.value = member.user_id;
+            option.textContent = member.username;
+            payeeSelect.appendChild(option);
+        });
+        
+        // Set default payer to current user
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        const currentUserOption = Array.from(payerSelect.options).find(option => 
+            option.value == currentUser.id
+        );
+        if (currentUserOption) {
+            payerSelect.value = currentUserOption.value;
+        }
+        
+    } catch (error) {
+        console.error('Failed to load group members:', error);
+        alert('Failed to load group members. Please try again.');
     }
 }
 
@@ -779,17 +864,40 @@ async function handleSettleExpense() {
         return;
     }
     
-    const settleData = {
-        amount: parseFloat(document.getElementById('settleAmount').value),
-        paid_to: parseInt(document.getElementById('settlePayee').value),
-        group_id: parseInt(document.getElementById('settleGroup').value)
-    };
+    // Collect form data
+    const amount = parseFloat(document.getElementById('settleAmount').value);
+    const currency = document.getElementById('settleCurrency').value;
+    const description = document.getElementById('settleDescription').value.trim();
+    const groupId = parseInt(document.getElementById('settleGroup').value);
+    const paidBy = parseInt(document.getElementById('settlePayer').value);
+    const paidTo = parseInt(document.getElementById('settlePayee').value);
     
     // Validate required fields
-    if (!settleData.amount || !settleData.paid_to || !settleData.group_id) {
+    if (!amount || !description || !groupId || !paidBy || !paidTo) {
         alert('Please fill in all required fields');
         return;
     }
+    
+    // Validate amount
+    if (amount <= 0) {
+        alert('Amount must be greater than 0');
+        return;
+    }
+    
+    // Validate paid_by and paid_to are different
+    if (paidBy === paidTo) {
+        alert('Cannot pay yourself');
+        return;
+    }
+    
+    const settleData = {
+        amount: amount,
+        currency: currency,
+        description: description,
+        group_id: groupId,
+        paid_by: paidBy,
+        paid_to: paidTo
+    };
     
     try {
         const response = await fetch('http://localhost:5000/api/payments', {
