@@ -1,3 +1,8 @@
+const themeScript = document.createElement("script");
+themeScript.src = "theme-toggle.js";
+themeScript.defer = true;
+document.head.appendChild(themeScript);
+
 document.getElementById("loginForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
