@@ -886,6 +886,7 @@ footer {
 
 .form-group {
     margin-bottom: 1.5rem;
+    position: relative;
 }
 
     .form-group label {
