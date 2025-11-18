@@ -7,6 +7,7 @@ from datetime import datetime
 import jwt
 import random
 import string
+from collections import defaultdict
 from crud import get_net_balances, get_user_balances
 
 # instance of Flask
@@ -548,6 +549,7 @@ def get_recent_activity():
         placeholders = ','.join(['?' for _ in group_ids])
         expenses_query = f"""
             SELECT e.expense_id, e.group_id, e.description, e.amount, e.paid_by, e.created_at, e.category,
+                   e.note, e.split_method,
                    u.username as paid_by_name, g.group_name,
                    CASE WHEN b.balance_id IS NOT NULL THEN 1 ELSE 0 END as user_owes
             FROM expenses e
@@ -579,6 +581,28 @@ def get_recent_activity():
         
         payments = conn.execute(payments_query, [user_id, user_id] + group_ids).fetchall()
         
+        expense_splits_map = defaultdict(list)
+        if expenses:
+            expense_ids = [expense['expense_id'] for expense in expenses]
+            placeholders_expenses = ','.join(['?' for _ in expense_ids])
+            splits_query = f"""
+                SELECT es.expense_id, es.user_id, es.amount, es.status, u.username
+                FROM expense_splits es
+                JOIN users u ON es.user_id = u.id
+                WHERE es.expense_id IN ({placeholders_expenses})
+                ORDER BY es.expense_id, u.username
+            """
+            payer_lookup = {expense['expense_id']: expense['paid_by'] for expense in expenses}
+            split_rows = conn.execute(splits_query, expense_ids).fetchall()
+            for split in split_rows:
+                status = split['status'] or ('payer' if split['user_id'] == payer_lookup.get(split['expense_id']) else 'owes')
+                expense_splits_map[split['expense_id']].append({
+                    'user_id': split['user_id'],
+                    'name': split['username'],
+                    'amount': float(split['amount']),
+                    'status': status
+                })
+        
         conn.close()
         
         # Format activities
@@ -601,7 +625,10 @@ def get_recent_activity():
                 'date': expense['created_at'],
                 'category': expense['category'] or '',
                 'is_my_expense': is_paid_by_me,
-                'is_involved': is_involved
+                'is_involved': is_involved,
+                'memo': expense['note'] or '',
+                'split_method': expense['split_method'] or '',
+                'splits': expense_splits_map.get(expense['expense_id'], [])
             })
         
         # Add payments
@@ -619,7 +646,9 @@ def get_recent_activity():
                 'group_name': payment['group_name'],
                 'group_id': payment['group_id'],
                 'is_my_payment': payment['paid_by'] == user_id,
-                'is_paid_to_me': payment['paid_to'] == user_id
+                'is_paid_to_me': payment['paid_to'] == user_id,
+                'memo': '',
+                'splits': []
             })
         
         # Sort all activities by date (most recent first)
@@ -672,6 +701,14 @@ def add_expense():
         split_method = data['split_method']
         participants = data['participants']
         split_details = data['split_details']
+        
+        if not isinstance(participants, list) or len(participants) == 0:
+            return jsonify({'error': 'At least one participant is required'}), 400
+        
+        try:
+            participants = [int(participant_id) for participant_id in participants]
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Participants must be numeric user IDs'}), 400
         
         # Optional fields
         note = data.get('note', '').strip()
@@ -739,12 +776,29 @@ def add_expense():
         
         expense_id = cursor.lastrowid
         
-        # Create balances based on split details using consolidation
+        # Persist split breakdown for future activity detail views
+        split_rows = []
         for participant_id in participants:
             participant_id = int(participant_id)
-            if participant_id != paid_by:  # Don't create balance for the person who paid
-                share_amount = float(split_details[str(participant_id)])
+            split_key = str(participant_id)
+            raw_amount = split_details.get(split_key, 0)
+            share_amount = float(raw_amount) if raw_amount is not None else 0.0
+            status = 'payer' if participant_id == paid_by else 'owes'
+            split_rows.append((expense_id, participant_id, share_amount, status, now))
+            
+            # Update balances when the participant owes the payer
+            if participant_id != paid_by:
                 consolidate_balances(conn, group_id, paid_by, participant_id, share_amount)
+        
+        # Ensure payer is captured even if not part of participants list
+        if paid_by not in participants:
+            split_rows.append((expense_id, paid_by, 0.0, 'payer', now))
+        
+        if split_rows:
+            conn.executemany(
+                'INSERT INTO expense_splits (expense_id, user_id, amount, status, created_at) VALUES (?, ?, ?, ?, ?)',
+                split_rows
+            )
         
         conn.commit()
         conn.close()
@@ -1312,6 +1366,7 @@ def get_group_activity(group_id):
         # Get recent expenses for this group
         expenses_query = """
             SELECT e.expense_id, e.description, e.amount, e.paid_by, e.created_at, e.category,
+                   e.note, e.split_method,
                    u.username as paid_by_name
             FROM expenses e
             JOIN users u ON e.paid_by = u.id
@@ -1336,6 +1391,28 @@ def get_group_activity(group_id):
         
         payments = conn.execute(payments_query, (group_id,)).fetchall()
         
+        expense_splits_map = defaultdict(list)
+        if expenses:
+            expense_ids = [expense['expense_id'] for expense in expenses]
+            placeholders_expenses = ','.join(['?' for _ in expense_ids])
+            splits_query = f"""
+                SELECT es.expense_id, es.user_id, es.amount, es.status, u.username
+                FROM expense_splits es
+                JOIN users u ON es.user_id = u.id
+                WHERE es.expense_id IN ({placeholders_expenses})
+                ORDER BY es.expense_id, u.username
+            """
+            payer_lookup = {expense['expense_id']: expense['paid_by'] for expense in expenses}
+            split_rows = conn.execute(splits_query, expense_ids).fetchall()
+            for split in split_rows:
+                status = split['status'] or ('payer' if split['user_id'] == payer_lookup.get(split['expense_id']) else 'owes')
+                expense_splits_map[split['expense_id']].append({
+                    'user_id': split['user_id'],
+                    'name': split['username'],
+                    'amount': float(split['amount']),
+                    'status': status
+                })
+        
         conn.close()
         
         # Format activities
@@ -1352,7 +1429,10 @@ def get_group_activity(group_id):
                 'paid_by_id': expense['paid_by'],
                 'date': expense['created_at'],
                 'category': expense['category'] or '',
-                'is_my_expense': expense['paid_by'] == user_id
+                'is_my_expense': expense['paid_by'] == user_id,
+                'memo': expense['note'] or '',
+                'split_method': expense['split_method'] or '',
+                'splits': expense_splits_map.get(expense['expense_id'], [])
             })
         
         # Add payments
@@ -1368,7 +1448,9 @@ def get_group_activity(group_id):
                 'paid_to_id': payment['paid_to'],
                 'date': payment['paid_at'],
                 'is_my_payment': payment['paid_by'] == user_id,
-                'is_paid_to_me': payment['paid_to'] == user_id
+                'is_paid_to_me': payment['paid_to'] == user_id,
+                'memo': '',
+                'splits': []
             })
         
         # Sort by date (most recent first)
