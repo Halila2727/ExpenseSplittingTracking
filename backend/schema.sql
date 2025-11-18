@@ -48,6 +48,17 @@ CREATE TABLE IF NOT EXISTS expenses (
     FOREIGN KEY (paid_by) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS expense_splits (
+    split_id INTEGER PRIMARY KEY NOT NULL,
+    expense_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    amount NUMERIC NOT NULL,
+    status TEXT,
+    created_at TEXT,
+    FOREIGN KEY (expense_id) REFERENCES expenses(expense_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS balances (
     balance_id INTEGER PRIMARY KEY NOT NULL,
     group_id INTEGER NOT NULL,
