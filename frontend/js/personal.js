@@ -87,7 +87,6 @@ async function loadPersonalData() {
     
     if (!token) {
         console.error('No authentication token available');
-        displayPersonalError();
         return;
     }
     
@@ -106,23 +105,8 @@ async function loadPersonalData() {
             updatePersonalStats(groupsData.groups);
         }
         
-        // Load activity data
-        const activityResponse = await fetch('http://localhost:5000/api/activity', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            }
-        });
-        
-        if (activityResponse.ok) {
-            const activityData = await activityResponse.json();
-            displayPersonalActivity(activityData.activities);
-        }
-        
     } catch (error) {
         console.error('Failed to load personal data:', error);
-        displayPersonalError();
     }
 }
 
@@ -141,125 +125,6 @@ function updatePersonalStats(groups) {
     }
 }
 
-function displayPersonalActivity(activities) {
-    const activityList = document.getElementById('personal-activity-list');
-    const emptyState = document.getElementById('empty-state');
-    
-    if (!activityList) {
-        console.error('Personal activity list element not found');
-        return;
-    }
-    
-    if (activities.length === 0) {
-        // Show empty state
-        activityList.style.display = 'none';
-        emptyState.style.display = 'block';
-        return;
-    }
-    
-    // Hide empty state and show activity list
-    emptyState.style.display = 'none';
-    activityList.style.display = 'block';
-    
-    // Clear loading state
-    activityList.innerHTML = '';
-    
-    // Show only first 5 activities for personal page
-    const recentActivities = activities.slice(0, 5);
-    
-    // Render activities
-    recentActivities.forEach(activity => {
-        const activityElement = createPersonalActivityElement(activity);
-        activityList.appendChild(activityElement);
-    });
-}
-
-function createPersonalActivityElement(activity) {
-    const activityItem = document.createElement('div');
-    activityItem.className = 'activity-item personal-activity-item';
-    activityItem.setAttribute('data-type', activity.type);
-    
-    // Create icon
-    const icon = document.createElement('div');
-    icon.className = `activity-icon ${activity.type}`;
-    icon.textContent = activity.type === 'expense' ? '$' : '$';
-    
-    // Create content
-    const content = document.createElement('div');
-    content.className = 'activity-content';
-    
-    // Description
-    const description = document.createElement('div');
-    description.className = 'activity-description';
-    
-    if (activity.type === 'expense') {
-        description.textContent = `${activity.paid_by} paid ${activity.description}`;
-    } else {
-        description.textContent = `${activity.paid_by} paid ${activity.paid_to}`;
-    }
-    
-    // Meta information
-    const meta = document.createElement('div');
-    meta.className = 'activity-meta';
-    
-    if (activity.type === 'expense') {
-        meta.innerHTML = `<span>in "${activity.group_name}"</span>`;
-    } else {
-        meta.innerHTML = `<span>in "${activity.group_name || 'General'}"</span>`;
-    }
-    
-    content.appendChild(description);
-    content.appendChild(meta);
-    
-    // Amount
-    const amount = document.createElement('div');
-    amount.className = 'activity-amount';
-    amount.textContent = `$${activity.amount.toFixed(2)}`;
-    
-    // Add color based on whether it's user's activity
-    if (activity.type === 'expense') {
-        if (activity.is_my_expense) {
-            amount.classList.add('negative'); // User paid, so it's money out (red)
-        } else if (activity.is_involved) {
-            amount.classList.add('negative'); // User owes money, so it's money out (red)
-        } else {
-            amount.classList.add('positive'); // Someone else paid, so it's money in (green)
-        }
-    } else {
-        if (activity.is_my_payment) {
-            amount.classList.add('negative'); // User paid, so it's money out (red)
-        } else if (activity.is_paid_to_me) {
-            amount.classList.add('positive'); // User received payment, so it's money in (green)
-        } else {
-            amount.classList.add('positive');
-        }
-    }
-    
-    activityItem.appendChild(icon);
-    activityItem.appendChild(content);
-    activityItem.appendChild(amount);
-    
-    return activityItem;
-}
-
-function displayPersonalError() {
-    const activityList = document.getElementById('personal-activity-list');
-    const emptyState = document.getElementById('empty-state');
-    
-    if (activityList) {
-        activityList.innerHTML = `
-            <div class="error-state">
-                <p>Error loading personal data. Please try again later.</p>
-                <button class="btn" onclick="loadPersonalData()">Retry</button>
-            </div>
-        `;
-    }
-    
-    if (emptyState) {
-        emptyState.style.display = 'none';
-    }
-}
-
 function setupFormHandlers() {
     // Edit profile form
     const editProfileForm = document.getElementById('editProfileForm');
@@ -268,110 +133,292 @@ function setupFormHandlers() {
             e.preventDefault();
             handleEditProfile();
         });
+        
+        // Clear errors on input
+        const profileNameInput = document.getElementById('profileName');
+        const profileEmailInput = document.getElementById('profileEmail');
+        
+        if (profileNameInput) {
+            profileNameInput.addEventListener('input', () => clearError('profileName'));
+        }
+        if (profileEmailInput) {
+            profileEmailInput.addEventListener('input', () => clearError('profileEmail'));
+        }
     }
     
-    // Close modal when clicking outside
-    window.addEventListener('click', function(e) {
-        if (e.target.classList.contains('modal')) {
-            e.target.style.display = 'none';
-            document.body.style.overflow = 'auto';
+    // Edit password form
+    const editPasswordForm = document.getElementById('editPasswordForm');
+    if (editPasswordForm) {
+        editPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            handleEditPassword();
+        });
+        
+        // Clear errors on input
+        const newPasswordInput = document.getElementById('newPassword');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', () => clearError('newPassword'));
         }
-    });
+        if (confirmPasswordInput) {
+            confirmPasswordInput.addEventListener('input', () => clearError('confirmPassword'));
+        }
+    }
+    
+    // Populate form fields with current user data
+    populateFormFields();
+}
+
+// Store current user data for validation
+let currentUserData = null;
+
+function populateFormFields() {
+    // Populate profile form with current user data
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    currentUserData = {
+        name: user.name || '',
+        email: user.email || ''
+    };
+    
+    const profileNameInput = document.getElementById('profileName');
+    const profileEmailInput = document.getElementById('profileEmail');
+    
+    if (profileNameInput) {
+        profileNameInput.value = currentUserData.name;
+    }
+    if (profileEmailInput) {
+        profileEmailInput.value = currentUserData.email;
+    }
+}
+
+function showError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    const errorElement = document.getElementById(fieldId + '-error');
+    
+    if (field) {
+        field.classList.add('error');
+    }
+    
+    if (errorElement) {
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+}
+
+function clearError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const errorElement = document.getElementById(fieldId + '-error');
+    
+    if (field) {
+        field.classList.remove('error');
+    }
+    
+    if (errorElement) {
+        errorElement.textContent = '';
+        errorElement.style.display = 'none';
+    }
+}
+
+function clearAllErrors() {
+    clearError('profileName');
+    clearError('profileEmail');
+    clearError('newPassword');
+    clearError('confirmPassword');
 }
 
 async function handleEditProfile() {
     const token = localStorage.getItem('token');
     
     if (!token) {
-        alert('Please log in to edit profile');
+        showError('profileName', 'Please log in to edit profile');
         return;
     }
     
-    const profileData = {
-        name: document.getElementById('profileName').value.trim(),
-        email: document.getElementById('profileEmail').value.trim()
-    };
+    // Clear previous errors
+    clearError('profileName');
+    clearError('profileEmail');
     
-    // Validate required fields
-    if (!profileData.name || !profileData.email) {
-        alert('Please fill in all required fields');
+    const nameInput = document.getElementById('profileName').value.trim();
+    const emailInput = document.getElementById('profileEmail').value.trim().toLowerCase();
+    
+    // Build update data - only include fields that have values
+    const profileData = {};
+    let hasChanges = false;
+    
+    if (nameInput) {
+        // Check if name is different
+        if (nameInput === currentUserData.name) {
+            showError('profileName', 'Name must be different from current name');
+            return;
+        }
+        profileData.name = nameInput;
+        hasChanges = true;
+    }
+    
+    if (emailInput) {
+        // Validate email format
+        if (!emailInput.includes('@')) {
+            showError('profileEmail', 'Invalid email format');
+            return;
+        }
+        
+        // Check if email is different
+        if (emailInput === currentUserData.email) {
+            showError('profileEmail', 'Email must be different from current email');
+            return;
+        }
+        profileData.email = emailInput;
+        hasChanges = true;
+    }
+    
+    // At least one field must be provided
+    if (!hasChanges) {
+        showError('profileName', 'Please provide at least one field to update');
         return;
     }
     
     try {
-        // This would need a backend endpoint for updating profile
-        // For now, just show success message
-        alert('Profile updated successfully! (This feature needs backend implementation)');
-        closeModal('editProfileModal');
+        const response = await fetch('http://localhost:5000/api/users/profile', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(profileData)
+        });
         
-        // Update local display
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Handle specific error messages
+            if (response.status === 409) {
+                showError('profileEmail', data.error || 'Email already in use');
+            } else {
+                const errorField = profileData.email ? 'profileEmail' : 'profileName';
+                showError(errorField, data.error || 'Failed to update profile');
+            }
+            return;
+        }
+        
+        // Update local display with new values (use updated values from response or keep current)
+        const updatedUser = data.user || {};
+        const newName = updatedUser.name || (profileData.name ? profileData.name : currentUserData.name);
+        const newEmail = updatedUser.email || (profileData.email ? profileData.email : currentUserData.email);
+        
         const profileName = document.getElementById('profile-name');
         const profileEmail = document.getElementById('profile-email');
+        const userInitials = document.getElementById('user-initials');
         
-        if (profileName) profileName.textContent = profileData.name;
-        if (profileEmail) profileEmail.textContent = profileData.email;
+        if (profileName) profileName.textContent = newName;
+        if (profileEmail) profileEmail.textContent = newEmail;
+        
+        // Update initials
+        if (userInitials) {
+            const initials = newName.split(' ').map(n => n[0]).join('').toUpperCase();
+            userInitials.textContent = initials;
+        }
+        
+        // Update localStorage and current user data
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        user.name = newName;
+        user.email = newEmail;
+        localStorage.setItem('user', JSON.stringify(user));
+        currentUserData = { name: newName, email: newEmail };
+        
+        // Clear form fields that were updated
+        if (profileData.name) {
+            document.getElementById('profileName').value = '';
+        }
+        if (profileData.email) {
+            document.getElementById('profileEmail').value = '';
+        }
+        
+        // Clear form errors on success
+        clearAllErrors();
         
     } catch (error) {
         console.error('Failed to update profile:', error);
-        alert('Failed to update profile. Please try again.');
+        showError('profileEmail', 'Network error. Please try again.');
     }
 }
 
-function saveSettings() {
-    const notifications = document.getElementById('notifications').value;
-    const currency = document.getElementById('currency').value;
-    const theme = document.getElementById('theme').value;
+async function handleEditPassword() {
+    const token = localStorage.getItem('token');
     
-    // Save to localStorage for now
-    localStorage.setItem('userSettings', JSON.stringify({
-        notifications,
-        currency,
-        theme
-    }));
+    if (!token) {
+        showError('newPassword', 'Please log in to change password');
+        return;
+    }
     
-    alert('Settings saved successfully!');
-    closeModal('settingsModal');
-}
-
-// Modal functions
-function openProfileModal() {
-    const modal = document.getElementById('editProfileModal');
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-        
-        // Populate form with current user data
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        document.getElementById('profileName').value = user.name || '';
-        document.getElementById('profileEmail').value = user.email || '';
+    // Clear previous errors
+    clearError('newPassword');
+    clearError('confirmPassword');
+    
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    let hasErrors = false;
+    
+    // Validate required fields
+    if (!newPassword) {
+        showError('newPassword', 'Password is required');
+        hasErrors = true;
     }
-}
-
-function openSettingsModal() {
-    const modal = document.getElementById('settingsModal');
-    if (modal) {
-        modal.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-        
-        // Load saved settings
-        const settings = JSON.parse(localStorage.getItem('userSettings') || '{}');
-        document.getElementById('notifications').value = settings.notifications || 'all';
-        document.getElementById('currency').value = settings.currency || 'USD';
-        document.getElementById('theme').value = settings.theme || 'light';
+    
+    if (!confirmPassword) {
+        showError('confirmPassword', 'Please confirm your password');
+        hasErrors = true;
     }
-}
-
-function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
+    
+    // Validate password length
+    if (newPassword && newPassword.length < 6) {
+        showError('newPassword', 'Password must be at least 6 characters long');
+        hasErrors = true;
+    }
+    
+    // Validate password match
+    if (newPassword && confirmPassword && newPassword !== confirmPassword) {
+        showError('confirmPassword', 'Passwords do not match');
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/users/password', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ new_password: newPassword })
+        });
         
-        // Reset form
-        const form = modal.querySelector('form');
-        if (form) {
-            form.reset();
+        const data = await response.json();
+        
+        if (!response.ok) {
+            // Handle specific error messages
+            if (response.status === 400 && data.error.includes('different')) {
+                showError('newPassword', data.error || 'New password must be different from current password');
+            } else {
+                showError('newPassword', data.error || 'Failed to update password');
+            }
+            return;
         }
+        
+        // Clear password fields on success
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+        // Clear form errors on success
+        clearAllErrors();
+        
+    } catch (error) {
+        console.error('Failed to update password:', error);
+        showError('newPassword', 'Network error. Please try again.');
     }
 }
 
@@ -400,7 +447,5 @@ function logout() {
     window.location.href = 'login.html';
 }
 
-// Make functions globally available
-window.openProfileModal = openProfileModal;
-window.openSettingsModal = openSettingsModal;
-window.closeModal = closeModal;
+
+

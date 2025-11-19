@@ -30,17 +30,22 @@
                 </div>
             </div>
 
-            <div class="empty-state" id="empty-state" style="display: none;">
-                <div class="empty-icon">📊</div>
-                <h3>No recent activity</h3>
-                <p>You haven't had any expenses or payments recently.</p>
-                <a href="dashboard.html" class="btn">Add an expense</a>
-            </div>
-        </div>
-    </section>
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-icon">📊</div>
+        <h3>No recent activity</h3>
+        <p>You haven't had any expenses or payments recently.</p>
+        <a href="dashboard.html" class="btn">Add an expense</a>
+      </div>
 
-    <script src="js/components.js"></script>
-    <script src="js/activity.js"></script>
-    <script src="theme-toggle.js" defer></script>
+      <div class="activity-export">
+        <button id="export-activity-btn" class="btn btn-outline">Export to PDF</button>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/components.js"></script>
+  <script src="js/dashboard-theme-toggle.js"></script>
+  <script src="js/activity.js"></script>
+  <script src="theme-toggle.js" defer></script>
 </body>
 </html>

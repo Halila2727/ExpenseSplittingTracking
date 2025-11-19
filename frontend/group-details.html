@@ -32,25 +32,29 @@
                     </div>
                 </div>
 
-                <!-- Right 50% - Activity -->
-                <div class="details-panel activity-panel">
-                    <h2>Recent Activity</h2>
-                    <div id="activity-list" class="activity-list">
-                        <div class="loading-state">
-                            <div class="loading-spinner"></div>
-                            <p>Loading activity...</p>
-                        </div>
-                    </div>
-                    <div id="no-activity" class="empty-state-small" style="display: none;">
-                        <p>No activity yet. Add expenses to get started.</p>
-                    </div>
-                </div>
+        <!-- Right 50% - Activity -->
+        <div class="details-panel activity-panel">
+          <h2>Recent Activity</h2>
+          <div id="activity-list" class="activity-list">
+            <div class="loading-state">
+              <div class="loading-spinner"></div>
+              <p>Loading activity...</p>
             </div>
+          </div>
+          <div id="no-activity" class="empty-state-small" style="display: none;">
+            <p>No activity yet. Add expenses to get started.</p>
+          </div>
+          <div class="activity-export">
+            <button id="export-group-activity-btn" class="btn btn-outline">Export to PDF</button>
+          </div>
         </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <script src="js/components.js?v=2"></script>
-    <script src="js/group-details.js?v=2"></script>
-    <script src="theme-toggle.js" defer></script>
+  <script src="js/components.js?v=2"></script>
+  <script src="js/dashboard-theme-toggle.js"></script>
+  <script src="js/group-details.js?v=3"></script>
+  <script src="theme-toggle.js" defer></script>
 </body>
 </html>

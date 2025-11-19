@@ -7,6 +7,7 @@ from datetime import datetime
 import jwt
 import random
 import string
+from collections import defaultdict
 from crud import get_net_balances, get_user_balances
 
 # instance of Flask
@@ -298,6 +299,168 @@ def verify_token():
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/users/profile', methods=['PUT'])
+def update_profile():
+    """
+    Update user profile (name and email)
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization token required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        data = request.get_json()
+        
+        # At least one field must be provided
+        if not data or (not data.get('name') and not data.get('email')):
+            return jsonify({'error': 'At least one field (name or email) must be provided'}), 400
+        
+        conn = get_db_connection()
+        
+        # Get current user data
+        current_user = conn.execute(
+            'SELECT username, email FROM users WHERE id = ?', (user_id,)
+        ).fetchone()
+        
+        if not current_user:
+            conn.close()
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Prepare update values - use current values if not provided
+        name = data.get('name', '').strip() if data.get('name') else current_user['username']
+        email = data.get('email', '').strip().lower() if data.get('email') else current_user['email']
+        
+        # Validate name if provided
+        if data.get('name'):
+            if not name:
+                conn.close()
+                return jsonify({'error': 'Name cannot be empty'}), 400
+            if name == current_user['username']:
+                conn.close()
+                return jsonify({'error': 'Name must be different from current name'}), 400
+        
+        # Validate email if provided
+        if data.get('email'):
+            if '@' not in email:
+                conn.close()
+                return jsonify({'error': 'Invalid email format'}), 400
+            if email == current_user['email']:
+                conn.close()
+                return jsonify({'error': 'Email must be different from current email'}), 400
+            
+            # Check if email is already in use
+            existing_user = conn.execute(
+                'SELECT id FROM users WHERE email = ? AND id != ?', (email, user_id)
+            ).fetchone()
+            
+            if existing_user:
+                conn.close()
+                return jsonify({'error': 'Email already in use'}), 409
+        
+        # Update user profile
+        now = datetime.now().isoformat()
+        conn.execute(
+            'UPDATE users SET username = ?, email = ?, updated_at = ? WHERE id = ?',
+            (name, email, now, user_id)
+        )
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Profile updated successfully',
+            'user': {
+                'id': user_id,
+                'name': name,
+                'email': email
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/users/password', methods=['PUT'])
+def update_password():
+    """
+    Update user password
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization token required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data or 'new_password' not in data:
+            return jsonify({'error': 'New password is required'}), 400
+        
+        new_password = data['new_password']
+        
+        # Validate password length
+        if len(new_password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        
+        conn = get_db_connection()
+        
+        # Get current user
+        user = conn.execute(
+            'SELECT password_hash FROM users WHERE id = ?', (user_id,)
+        ).fetchone()
+        
+        if not user:
+            conn.close()
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Check if new password is the same as current password
+        if verify_password(new_password, user['password_hash']):
+            conn.close()
+            return jsonify({'error': 'New password must be different from current password'}), 400
+        
+        # Hash new password
+        new_password_hash = hash_password(new_password)
+        
+        # Update password
+        now = datetime.now().isoformat()
+        conn.execute(
+            'UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?',
+            (new_password_hash, now, user_id)
+        )
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'message': 'Password updated successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/api/balance', methods=['GET'])
 def get_balance():
     """
@@ -385,7 +548,8 @@ def get_recent_activity():
         # Use LEFT JOIN with balances to check if user owes money from each expense
         placeholders = ','.join(['?' for _ in group_ids])
         expenses_query = f"""
-            SELECT e.expense_id, e.group_id, e.description, e.amount, e.paid_by, e.created_at,
+            SELECT e.expense_id, e.group_id, e.description, e.amount, e.paid_by, e.created_at, e.category,
+                   e.note, e.split_method,
                    u.username as paid_by_name, g.group_name,
                    CASE WHEN b.balance_id IS NOT NULL THEN 1 ELSE 0 END as user_owes
             FROM expenses e
@@ -417,6 +581,28 @@ def get_recent_activity():
         
         payments = conn.execute(payments_query, [user_id, user_id] + group_ids).fetchall()
         
+        expense_splits_map = defaultdict(list)
+        if expenses:
+            expense_ids = [expense['expense_id'] for expense in expenses]
+            placeholders_expenses = ','.join(['?' for _ in expense_ids])
+            splits_query = f"""
+                SELECT es.expense_id, es.user_id, es.amount, es.status, u.username
+                FROM expense_splits es
+                JOIN users u ON es.user_id = u.id
+                WHERE es.expense_id IN ({placeholders_expenses})
+                ORDER BY es.expense_id, u.username
+            """
+            payer_lookup = {expense['expense_id']: expense['paid_by'] for expense in expenses}
+            split_rows = conn.execute(splits_query, expense_ids).fetchall()
+            for split in split_rows:
+                status = split['status'] or ('payer' if split['user_id'] == payer_lookup.get(split['expense_id']) else 'owes')
+                expense_splits_map[split['expense_id']].append({
+                    'user_id': split['user_id'],
+                    'name': split['username'],
+                    'amount': float(split['amount']),
+                    'status': status
+                })
+        
         conn.close()
         
         # Format activities
@@ -437,8 +623,12 @@ def get_recent_activity():
                 'group_name': expense['group_name'],
                 'group_id': expense['group_id'],
                 'date': expense['created_at'],
+                'category': expense['category'] or '',
                 'is_my_expense': is_paid_by_me,
-                'is_involved': is_involved
+                'is_involved': is_involved,
+                'memo': expense['note'] or '',
+                'split_method': expense['split_method'] or '',
+                'splits': expense_splits_map.get(expense['expense_id'], [])
             })
         
         # Add payments
@@ -456,7 +646,9 @@ def get_recent_activity():
                 'group_name': payment['group_name'],
                 'group_id': payment['group_id'],
                 'is_my_payment': payment['paid_by'] == user_id,
-                'is_paid_to_me': payment['paid_to'] == user_id
+                'is_paid_to_me': payment['paid_to'] == user_id,
+                'memo': '',
+                'splits': []
             })
         
         # Sort all activities by date (most recent first)
@@ -509,6 +701,14 @@ def add_expense():
         split_method = data['split_method']
         participants = data['participants']
         split_details = data['split_details']
+        
+        if not isinstance(participants, list) or len(participants) == 0:
+            return jsonify({'error': 'At least one participant is required'}), 400
+        
+        try:
+            participants = [int(participant_id) for participant_id in participants]
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Participants must be numeric user IDs'}), 400
         
         # Optional fields
         note = data.get('note', '').strip()
@@ -576,12 +776,29 @@ def add_expense():
         
         expense_id = cursor.lastrowid
         
-        # Create balances based on split details using consolidation
+        # Persist split breakdown for future activity detail views
+        split_rows = []
         for participant_id in participants:
             participant_id = int(participant_id)
-            if participant_id != paid_by:  # Don't create balance for the person who paid
-                share_amount = float(split_details[str(participant_id)])
+            split_key = str(participant_id)
+            raw_amount = split_details.get(split_key, 0)
+            share_amount = float(raw_amount) if raw_amount is not None else 0.0
+            status = 'payer' if participant_id == paid_by else 'owes'
+            split_rows.append((expense_id, participant_id, share_amount, status, now))
+            
+            # Update balances when the participant owes the payer
+            if participant_id != paid_by:
                 consolidate_balances(conn, group_id, paid_by, participant_id, share_amount)
+        
+        # Ensure payer is captured even if not part of participants list
+        if paid_by not in participants:
+            split_rows.append((expense_id, paid_by, 0.0, 'payer', now))
+        
+        if split_rows:
+            conn.executemany(
+                'INSERT INTO expense_splits (expense_id, user_id, amount, status, created_at) VALUES (?, ?, ?, ?, ?)',
+                split_rows
+            )
         
         conn.commit()
         conn.close()
@@ -1148,7 +1365,8 @@ def get_group_activity(group_id):
         
         # Get recent expenses for this group
         expenses_query = """
-            SELECT e.expense_id, e.description, e.amount, e.paid_by, e.created_at,
+            SELECT e.expense_id, e.description, e.amount, e.paid_by, e.created_at, e.category,
+                   e.note, e.split_method,
                    u.username as paid_by_name
             FROM expenses e
             JOIN users u ON e.paid_by = u.id
@@ -1173,6 +1391,28 @@ def get_group_activity(group_id):
         
         payments = conn.execute(payments_query, (group_id,)).fetchall()
         
+        expense_splits_map = defaultdict(list)
+        if expenses:
+            expense_ids = [expense['expense_id'] for expense in expenses]
+            placeholders_expenses = ','.join(['?' for _ in expense_ids])
+            splits_query = f"""
+                SELECT es.expense_id, es.user_id, es.amount, es.status, u.username
+                FROM expense_splits es
+                JOIN users u ON es.user_id = u.id
+                WHERE es.expense_id IN ({placeholders_expenses})
+                ORDER BY es.expense_id, u.username
+            """
+            payer_lookup = {expense['expense_id']: expense['paid_by'] for expense in expenses}
+            split_rows = conn.execute(splits_query, expense_ids).fetchall()
+            for split in split_rows:
+                status = split['status'] or ('payer' if split['user_id'] == payer_lookup.get(split['expense_id']) else 'owes')
+                expense_splits_map[split['expense_id']].append({
+                    'user_id': split['user_id'],
+                    'name': split['username'],
+                    'amount': float(split['amount']),
+                    'status': status
+                })
+        
         conn.close()
         
         # Format activities
@@ -1188,7 +1428,11 @@ def get_group_activity(group_id):
                 'paid_by': expense['paid_by_name'],
                 'paid_by_id': expense['paid_by'],
                 'date': expense['created_at'],
-                'is_my_expense': expense['paid_by'] == user_id
+                'category': expense['category'] or '',
+                'is_my_expense': expense['paid_by'] == user_id,
+                'memo': expense['note'] or '',
+                'split_method': expense['split_method'] or '',
+                'splits': expense_splits_map.get(expense['expense_id'], [])
             })
         
         # Add payments
@@ -1204,7 +1448,9 @@ def get_group_activity(group_id):
                 'paid_to_id': payment['paid_to'],
                 'date': payment['paid_at'],
                 'is_my_payment': payment['paid_by'] == user_id,
-                'is_paid_to_me': payment['paid_to'] == user_id
+                'is_paid_to_me': payment['paid_to'] == user_id,
+                'memo': '',
+                'splits': []
             })
         
         # Sort by date (most recent first)

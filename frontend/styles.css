@@ -550,27 +550,47 @@ footer {
 
 
 .activity-list {
-    background: var(--light);
-    border-radius: 12px;
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    background: transparent;
+    border-radius: 0;
+    overflow: visible;
 }
 
 .activity-item {
     display: flex;
-    align-items: center;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #e0e0e0;
-    transition: background-color 0.2s ease;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.25rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
     background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
 }
-
-    .activity-item:last-child {
-        border-bottom: none;
-    }
 
     .activity-item:hover {
         background: #f8f9fa;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
     }
+
+.activity-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.activity-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+    margin-left: auto;
+}
 
 .activity-icon {
     width: 32px;
@@ -658,10 +678,147 @@ footer {
     line-height: 1.2;
 }
 
+.activity-toggle {
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 999px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+    .activity-toggle:hover {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-toggle .chevron {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #555;
+        transition: transform 0.2s ease;
+    }
+
+.activity-item.expanded .activity-toggle .chevron {
+    transform: rotate(180deg);
+}
+
+.activity-details {
+    width: 100%;
+    display: none;
+    border-top: 1px solid #ececec;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    gap: 0.75rem;
+    flex-direction: column;
+}
+
+.activity-item.expanded .activity-details {
+    display: flex;
+}
+
+.activity-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #444;
+    gap: 1rem;
+}
+
+.activity-detail-row .label {
+    font-weight: 600;
+    color: #222;
+}
+
+.activity-split-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.activity-detail-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+}
+
+.activity-split-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.activity-split-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+    .activity-split-item .participant {
+        font-weight: 600;
+    }
+
+    .activity-split-item .amount {
+        font-variant-numeric: tabular-nums;
+        font-weight: 500;
+    }
+
+    .activity-split-item .status {
+        justify-self: end;
+        font-size: 0.8rem;
+        color: #777;
+    }
+
+.activity-split-empty {
+    font-size: 0.9rem;
+    color: #777;
+    font-style: italic;
+}
+
+.activity-attachment-placeholder {
+    border: 1px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 0.75rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #777;
+}
+
+.activity-memo-box {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.03);
+    font-family: 'Courier New', Courier, monospace;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #222;
+}
+
 .loading-state {
     text-align: center;
     padding: 3rem;
     color: var(--gray);
+}
+
+.activity-list .loading-state {
+    grid-column: 1 / -1;
+}
+
+.activity-export {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .loading-spinner {
@@ -1214,29 +1371,12 @@ footer {
 }
 
 /* Personal Page Styles */
-.personal-actions {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
 .personal-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
     margin-bottom: 2rem;
 }
 
 .profile-section {
-    grid-column: 1;
-    display: flex;
-    justify-content: center;
-}
-
-.recent-activity-section {
-    grid-column: 2;
+    width: 100%;
 }
 
 .profile-card {
@@ -1245,7 +1385,7 @@ footer {
     padding: 1.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 100%;
-    max-width: 400px;
+    margin-bottom: 0;
 }
 
 .profile-header {
@@ -1296,6 +1436,8 @@ footer {
     gap: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--light);
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 .stat-item {
@@ -1318,87 +1460,70 @@ footer {
     color: var(--primary);
 }
 
-.recent-activity-section h3 {
-    margin: 0 0 1rem 0;
-    font-size: 1.125rem;
-    font-weight: 600;
+/* Profile Forms Styles */
+.profile-forms {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
 }
 
-.personal-activity-item {
+.profile-form-section {
     background: white;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-    .personal-activity-item .activity-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        font-weight: 600;
-        flex-shrink: 0;
+.form-section-title {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+    border-bottom: 1px solid var(--light);
+    padding-bottom: 0.75rem;
+}
+
+.inline-form {
+    width: 100%;
+}
+
+.inline-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.inline-form .form-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.inline-form input.error,
+.inline-form select.error {
+    border-color: var(--error-dark);
+    box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.1);
+}
+
+.error-message {
+    display: none;
+    color: var(--error-dark);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--light);
+}
+
+    .form-actions .btn {
+        min-width: 120px;
     }
-
-        .personal-activity-item .activity-icon.expense {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .personal-activity-item .activity-icon.payment {
-            background: #f3e5f5;
-            color: #7b1fa2;
-        }
-
-    .personal-activity-item .activity-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .personal-activity-item .activity-description {
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin-bottom: 0.25rem;
-    }
-
-    .personal-activity-item .activity-meta {
-        font-size: 0.75rem;
-        color: var(--gray);
-    }
-
-    .personal-activity-item .activity-amount {
-        font-weight: 600;
-        font-size: 0.875rem;
-        flex-shrink: 0;
-    }
-
-        .personal-activity-item .activity-amount.positive {
-            color: var(--success-dark);
-        }
-
-        .personal-activity-item .activity-amount.negative {
-            color: var(--error-dark);
-        }
 
 /* Responsive Personal Page */
 @media (max-width: 768px) {
-    .personal-content {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .profile-section,
-    .recent-activity-section {
-        grid-column: 1;
-    }
-
     .profile-header {
         flex-direction: column;
         text-align: center;
@@ -1410,8 +1535,9 @@ footer {
         gap: 0.75rem;
     }
 
-    .personal-actions {
-        justify-content: center;
+    .profile-forms {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 }
 
@@ -1483,7 +1609,7 @@ footer {
     padding-bottom: 0.5rem;
 }
 
-.balances-list, .activity-list {
+.balances-list {
     min-height: 300px;
 }
 
@@ -1621,6 +1747,17 @@ footer {
     .activity-icon.expense {
         background: #e3f2fd;
         color: #1976d2;
+    }
+
+    .activity-icon.payment {
+        background: #e8f5e8;
+        color: #2d5a2d;
+    }
+
+    .activity-icon img {
+        width: 80%;
+        height: 80%;
+        object-fit: contain;
     }
 
 .activity-content {
