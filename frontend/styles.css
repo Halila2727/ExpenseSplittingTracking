@@ -1954,3 +1954,20 @@ body.dark-mode .subnav-link{
 body.dark-mode .subnav-link.active{
     background-color : #3a3a3a;
 }
+
+/* Add and Settle Expense modals */
+body.dark-mode .modal-header{
+    background-color: #2a2a2a;
+}
+
+/*Recent Activity*/
+body.dark-mode .activity,
+body.dark-mode .activity-list.activity-list{
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* Groups */
+body.dark-mode .group-card{
+    background-color: #2a2a2a;
+}

@@ -7,146 +7,147 @@
   <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
-  <div id="header-container"></div>
+    <div id="header-container"></div>
 
-  <section class="personal">
-    <div class="container">
-      <div class="balance-banner">
-        <span class="balance-title">Personal</span>
-      </div>
-
-      <div class="subnav">
-        <a href="dashboard.html" class="subnav-link">Dashboard</a>
-        <a href="activity.html" class="subnav-link">Recent Activity</a>
-        <a href="groups.html" class="subnav-link">Groups</a>
-        <a href="#" class="subnav-link active">Personal</a>
-      </div>
-
-      <div class="personal-actions">
-        <div class="action-buttons">
-          <button class="btn" onclick="openProfileModal()">Edit Profile</button>
-          <button class="btn btn-outline" onclick="openSettingsModal()">Settings</button>
-        </div>
-      </div>
-
-      <div class="personal-content">
-        <div class="profile-section">
-          <div class="profile-card">
-            <div class="profile-header">
-              <div class="profile-avatar">
-                <span class="avatar-text" id="user-initials">U</span>
-              </div>
-              <div class="profile-info">
-                <h2 class="profile-name" id="profile-name">User Name</h2>
-                <p class="profile-email" id="profile-email">user@example.com</p>
-              </div>
+    <section class="personal">
+        <div class="container">
+            <div class="balance-banner">
+                <span class="balance-title">Personal</span>
             </div>
-            <div class="profile-stats">
-              <div class="stat-item">
-                <span class="stat-label">Total Groups</span>
-                <span class="stat-value" id="total-groups">0</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-label">Member Since</span>
-                <span class="stat-value" id="member-since">2024</span>
-              </div>
+
+            <div class="subnav">
+                <a href="dashboard.html" class="subnav-link">Dashboard</a>
+                <a href="activity.html" class="subnav-link">Recent Activity</a>
+                <a href="groups.html" class="subnav-link">Groups</a>
+                <a href="#" class="subnav-link active">Personal</a>
             </div>
-          </div>
-        </div>
 
-        <div class="recent-activity-section">
-          <h3>Recent Personal Activity</h3>
-          <div class="activity-list" id="personal-activity-list">
-            <div class="loading-state">
-              <div class="loading-spinner"></div>
-              <p>Loading personal activity...</p>
+            <div class="personal-actions">
+                <div class="action-buttons">
+                    <button class="btn" onclick="openProfileModal()">Edit Profile</button>
+                    <button class="btn btn-outline" onclick="openSettingsModal()">Settings</button>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div class="empty-state" id="empty-state" style="display: none;">
-        <div class="empty-icon">👤</div>
-        <h3>No personal data yet</h3>
-        <p>Start using Centsible to see your personal statistics and activity here.</p>
-        <div class="empty-actions">
-          <a href="dashboard.html" class="btn">Go to Dashboard</a>
-          <a href="groups.html" class="btn btn-outline">Join a Group</a>
+            <div class="personal-content">
+                <div class="profile-section">
+                    <div class="profile-card">
+                        <div class="profile-header">
+                            <div class="profile-avatar">
+                                <span class="avatar-text" id="user-initials">U</span>
+                            </div>
+                            <div class="profile-info">
+                                <h2 class="profile-name" id="profile-name">User Name</h2>
+                                <p class="profile-email" id="profile-email">user@example.com</p>
+                            </div>
+                        </div>
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Total Groups</span>
+                                <span class="stat-value" id="total-groups">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Member Since</span>
+                                <span class="stat-value" id="member-since">2024</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-activity-section">
+                    <h3>Recent Personal Activity</h3>
+                    <div class="activity-list" id="personal-activity-list">
+                        <div class="loading-state">
+                            <div class="loading-spinner"></div>
+                            <p>Loading personal activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-icon">👤</div>
+                <h3>No personal data yet</h3>
+                <p>Start using Centsible to see your personal statistics and activity here.</p>
+                <div class="empty-actions">
+                    <a href="dashboard.html" class="btn">Go to Dashboard</a>
+                    <a href="groups.html" class="btn btn-outline">Join a Group</a>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Profile</h2>
+                <span class="close" onclick="closeModal('editProfileModal')">&times;</span>
+            </div>
+            <form id="editProfileForm" class="modal-form">
+                <div class="form-group">
+                    <label for="profileName">Name</label>
+                    <input type="text" id="profileName" placeholder="Enter your name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="profileEmail">Email</label>
+                    <input type="email" id="profileEmail" placeholder="Enter your email" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('editProfileModal')">Cancel</button>
+                    <button type="submit" class="btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </section>
 
-  <!-- Edit Profile Modal -->
-  <div id="editProfileModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Edit Profile</h2>
-        <span class="close" onclick="closeModal('editProfileModal')">&times;</span>
-      </div>
-      <form id="editProfileForm" class="modal-form">
-        <div class="form-group">
-          <label for="profileName">Name</label>
-          <input type="text" id="profileName" placeholder="Enter your name" required>
-        </div>
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <span class="close" onclick="closeModal('settingsModal')">&times;</span>
+            </div>
+            <div class="modal-form">
+                <div class="form-group">
+                    <label for="notifications">Email Notifications</label>
+                    <select id="notifications">
+                        <option value="all">All notifications</option>
+                        <option value="important">Important only</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
 
-        <div class="form-group">
-          <label for="profileEmail">Email</label>
-          <input type="email" id="profileEmail" placeholder="Enter your email" required>
-        </div>
+                <div class="form-group">
+                    <label for="currency">Default Currency</label>
+                    <select id="currency">
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                    </select>
+                </div>
 
-        <div class="modal-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal('editProfileModal')">Cancel</button>
-          <button type="submit" class="btn">Save Changes</button>
+                <div class="form-group">
+                    <label for="theme">Theme</label>
+                    <select id="theme">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="auto">Auto</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Cancel</button>
+                    <button type="button" class="btn" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
         </div>
-      </form>
     </div>
-  </div>
 
-  <!-- Settings Modal -->
-  <div id="settingsModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Settings</h2>
-        <span class="close" onclick="closeModal('settingsModal')">&times;</span>
-      </div>
-      <div class="modal-form">
-        <div class="form-group">
-          <label for="notifications">Email Notifications</label>
-          <select id="notifications">
-            <option value="all">All notifications</option>
-            <option value="important">Important only</option>
-            <option value="none">None</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="currency">Default Currency</label>
-          <select id="currency">
-            <option value="USD">USD ($)</option>
-            <option value="EUR">EUR (€)</option>
-            <option value="GBP">GBP (£)</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label for="theme">Theme</label>
-          <select id="theme">
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-            <option value="auto">Auto</option>
-          </select>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal('settingsModal')">Cancel</button>
-          <button type="button" class="btn" onclick="saveSettings()">Save Settings</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="js/components.js"></script>
-  <script src="js/personal.js"></script>
+    <script src="js/components.js"></script>
+    <script src="js/personal.js"></script>
+    <script src="theme-toggle.js" defer></script>
 </body>
 </html>
