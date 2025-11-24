@@ -7,30 +7,30 @@
   <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
-  <div id="header-container"></div>
+    <div id="header-container"></div>
 
-  <section class="group-details">
-    <div class="container">
-      <!-- Back button and header -->
-      <div class="group-details-header">
-        <button class="btn-back" onclick="goBack()">‹</button>
-        <h1 id="group-name">Group Details</h1>
-      </div>
-
-      <div class="group-details-content">
-        <!-- Left 50% - Balances -->
-        <div class="details-panel balances-panel">
-          <h2>Group Balances</h2>
-          <div id="balances-list" class="balances-list">
-            <div class="loading-state">
-              <div class="loading-spinner"></div>
-              <p>Loading balances...</p>
+    <section class="group-details">
+        <div class="container">
+            <!-- Back button and header -->
+            <div class="group-details-header">
+                <button class="btn-back" onclick="goBack()">‹</button>
+                <h1 id="group-name">Group Details</h1>
             </div>
-          </div>
-          <div id="no-balances" class="empty-state-small" style="display: none;">
-            <p>No balances yet. Add expenses to see who owes whom.</p>
-          </div>
-        </div>
+
+            <div class="group-details-content">
+                <!-- Left 50% - Balances -->
+                <div class="details-panel balances-panel">
+                    <h2>Group Balances</h2>
+                    <div id="balances-list" class="balances-list">
+                        <div class="loading-state">
+                            <div class="loading-spinner"></div>
+                            <p>Loading balances...</p>
+                        </div>
+                    </div>
+                    <div id="no-balances" class="empty-state-small" style="display: none;">
+                        <p>No balances yet. Add expenses to see who owes whom.</p>
+                    </div>
+                </div>
 
         <!-- Right 50% - Activity -->
         <div class="details-panel activity-panel">

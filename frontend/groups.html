@@ -1,100 +1,100 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Centsible - Groups</title>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <title>Centsible - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="header-container"></div>
+    <div id="header-container"></div>
 
-  <section class="groups">
-    <div class="container">
-      <div class="balance-banner">
-        <span class="balance-title">Your Groups</span>
-      </div>
+    <section class="groups">
+        <div class="container">
+            <div class="balance-banner">
+                <span class="balance-title">Your Groups</span>
+            </div>
 
-      <div class="subnav">
-        <a href="dashboard.html" class="subnav-link">Dashboard</a>
-        <a href="activity.html" class="subnav-link">Recent Activity</a>
-        <a href="#" class="subnav-link active">Groups</a>
-        <a href="personal.html" class="subnav-link">Personal</a>
-      </div>
+            <div class="subnav">
+                <a href="dashboard.html" class="subnav-link">Dashboard</a>
+                <a href="activity.html" class="subnav-link">Recent Activity</a>
+                <a href="#" class="subnav-link active">Groups</a>
+                <a href="personal.html" class="subnav-link">Personal</a>
+            </div>
 
-      <div class="groups-actions">
-        <div class="action-buttons">
-          <button class="btn" onclick="openCreateGroupModal()">Create Group</button>
-          <button class="btn btn-outline" onclick="openJoinGroupModal()">Join Group</button>
+            <div class="groups-actions">
+                <div class="action-buttons">
+                    <button class="btn" onclick="openCreateGroupModal()">Create Group</button>
+                    <button class="btn btn-outline" onclick="openJoinGroupModal()">Join Group</button>
+                </div>
+            </div>
+
+            <div class="groups-list" id="groups-list">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading groups...</p>
+                </div>
+            </div>
+
+            <div class="empty-state" id="empty-state" style="display: none;">
+                <div class="empty-icon">👥</div>
+                <h3>No groups yet</h3>
+                <p>Create your first group or join an existing one to start tracking shared expenses.</p>
+                <div class="empty-actions">
+                    <button class="btn" onclick="openCreateGroupModal()">Create Group</button>
+                    <button class="btn btn-outline" onclick="openJoinGroupModal()">Join Group</button>
+                </div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div class="groups-list" id="groups-list">
-        <div class="loading-state">
-          <div class="loading-spinner"></div>
-          <p>Loading groups...</p>
-        </div>
-      </div>
+    <!-- Create Group Modal -->
+    <div id="createGroupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Group</h2>
+                <span class="close" onclick="closeModal('createGroupModal')">&times;</span>
+            </div>
+            <form id="createGroupForm" class="modal-form">
+                <div class="form-group">
+                    <label for="groupName">Group Name *</label>
+                    <input type="text" id="groupName" placeholder="e.g., Roommates, Travel Group" required>
+                </div>
 
-      <div class="empty-state" id="empty-state" style="display: none;">
-        <div class="empty-icon">👥</div>
-        <h3>No groups yet</h3>
-        <p>Create your first group or join an existing one to start tracking shared expenses.</p>
-        <div class="empty-actions">
-          <button class="btn" onclick="openCreateGroupModal()">Create Group</button>
-          <button class="btn btn-outline" onclick="openJoinGroupModal()">Join Group</button>
+                <div class="form-group">
+                    <label for="groupDescription">Description</label>
+                    <textarea id="groupDescription" rows="3" placeholder="Optional description for your group..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('createGroupModal')">Cancel</button>
+                    <button type="submit" class="btn">Create Group</button>
+                </div>
+            </form>
         </div>
-      </div>
     </div>
-  </section>
 
-  <!-- Create Group Modal -->
-  <div id="createGroupModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Create New Group</h2>
-        <span class="close" onclick="closeModal('createGroupModal')">&times;</span>
-      </div>
-      <form id="createGroupForm" class="modal-form">
-        <div class="form-group">
-          <label for="groupName">Group Name *</label>
-          <input type="text" id="groupName" placeholder="e.g., Roommates, Travel Group" required>
-        </div>
+    <!-- Join Group Modal -->
+    <div id="joinGroupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Join Group</h2>
+                <span class="close" onclick="closeModal('joinGroupModal')">&times;</span>
+            </div>
+            <form id="joinGroupForm" class="modal-form">
+                <div class="form-group">
+                    <label for="joinCode">Group Code *</label>
+                    <input type="text" id="joinCode" placeholder="Enter 4-digit group code" maxlength="4" required>
+                    <small>Ask a group member for the 4-digit code</small>
+                </div>
 
-        <div class="form-group">
-          <label for="groupDescription">Description</label>
-          <textarea id="groupDescription" rows="3" placeholder="Optional description for your group..."></textarea>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" onclick="closeModal('joinGroupModal')">Cancel</button>
+                    <button type="submit" class="btn">Join Group</button>
+                </div>
+            </form>
         </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal('createGroupModal')">Cancel</button>
-          <button type="submit" class="btn">Create Group</button>
-        </div>
-      </form>
     </div>
-  </div>
-
-  <!-- Join Group Modal -->
-  <div id="joinGroupModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Join Group</h2>
-        <span class="close" onclick="closeModal('joinGroupModal')">&times;</span>
-      </div>
-      <form id="joinGroupForm" class="modal-form">
-        <div class="form-group">
-          <label for="joinCode">Group Code *</label>
-          <input type="text" id="joinCode" placeholder="Enter 4-digit group code" maxlength="4" required>
-          <small>Ask a group member for the 4-digit code</small>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal('joinGroupModal')">Cancel</button>
-          <button type="submit" class="btn">Join Group</button>
-        </div>
-      </form>
-    </div>
-  </div>
 
   <script src="js/components.js?v=2"></script>
   <script src="js/dashboard-theme-toggle.js"></script>

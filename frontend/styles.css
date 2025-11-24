@@ -203,6 +203,21 @@ nav {
     max-width: 80vw; /* guard on small screens */
 }
 
+model-viewer {
+    width: 300px;
+    height: 300px;
+    background: none;
+    position: relative;
+}
+
+.logo-image {
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
 #toggle-navbar {
     display: none;
 }
@@ -1888,6 +1903,7 @@ footer {
         cursor: pointer;
         margin: 0;
         font-size: 0.875rem;
+        width: 30%;
     }
 
 /* Split details styles */
@@ -2066,4 +2082,55 @@ body.dark-mode h4,
 body.dark-mode h5,
 body.dark-mode h6 {
     color: #ffffff;
+}
+
+/* Dashboard container */
+body.dark-mode .dashboard,
+body.dark-mode .balance-title{
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* Smaller Modules in Dashboard */
+body.dark-mode .subnav,
+body.dark-mode .dashboard-actions,
+body.dark-mode .breakdown-card.owe,
+body.dark-mode .breakdown-card.owed {
+    background-color: #2a2a2a;
+}
+
+body.dark-mode .subnav-link{
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+body.dark-mode .subnav-link.active{
+    background-color : #3a3a3a;
+}
+
+/* Add and Settle Expense modals */
+body.dark-mode .modal-header{
+    background-color: #2a2a2a;
+}
+/* Changing text color back */
+body.dark-mode #addCurrencyType, /* Currency Prefix */
+body.dark-mode #settleCurrencyType,
+body.dark-mode .split-details, /* Split method dropdown */
+body.dark-mode .split-details h4{
+    color: #000000;
+}
+
+/*Recent Activity*/
+body.dark-mode .activity,
+body.dark-mode .activity-list.activity-list{
+    background-color: #121212;
+    color: #ffffff;
+}
+
+/* Groups */
+body.dark-mode .group-card{
+    background-color: #2a2a2a;
+}
+
+body.dark-mode .profile-card{
+    background-color: #8B8B8B;
 }
