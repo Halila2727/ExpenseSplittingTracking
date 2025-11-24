@@ -9,6 +9,7 @@ import random
 import string
 from collections import defaultdict
 from crud import get_net_balances, get_user_balances
+from splitting import compute_custom_splits, SplitError
 
 # instance of Flask
 app = Flask(__name__)
@@ -721,8 +722,11 @@ def add_expense():
             return jsonify({'error': 'Amount must be greater than 0'}), 400
         
         # Validate split method
-        if split_method not in ['equal', 'percentage', 'exact']:
+        if split_method not in ['equal', 'percentage', 'exact', 'custom']:
             return jsonify({'error': 'Invalid split method'}), 400
+        
+        # For custom splits, we need split_config instead of split_details
+        split_config = data.get('split_config', [])  # List of {user_id, type, value}
         
         # Check if user is member of the group
         conn = get_db_connection()
@@ -756,16 +760,63 @@ def add_expense():
                 conn.close()
                 return jsonify({'error': f'Participant {participant_id} is not a member of this group'}), 400
         
-        # Validate split details match participants
-        if len(split_details) != len(participants):
-            conn.close()
-            return jsonify({'error': 'Split details must match number of participants'}), 400
-        
-        # Validate split details sum equals amount (with small tolerance for rounding)
-        total_split = sum(float(amount) for amount in split_details.values())
-        if abs(total_split - amount) > 0.01:
-            conn.close()
-            return jsonify({'error': 'Split details must sum to the total amount'}), 400
+        # Handle custom split method
+        if split_method == 'custom':
+            if not split_config or not isinstance(split_config, list):
+                conn.close()
+                return jsonify({'error': 'split_config is required for custom split method'}), 400
+            
+            # Convert amount to cents for compute_custom_splits
+            total_cents = int(round(amount * 100))
+            
+            # Validate split_config format and convert to expected format
+            members = []
+            for config in split_config:
+                if 'user_id' not in config or 'type' not in config:
+                    conn.close()
+                    return jsonify({'error': 'Each split_config entry must have user_id and type'}), 400
+                
+                if config['type'] not in ['amount', 'percent', 'none']:
+                    conn.close()
+                    return jsonify({'error': f"Invalid split type: {config['type']}. Must be 'amount', 'percent', or 'none'"}), 400
+                
+                # Convert amount values to cents, keep percentages as-is
+                value = config.get('value')
+                if config['type'] == 'amount' and value is not None:
+                    value = int(round(float(value) * 100))  # Convert dollars to cents
+                elif config['type'] == 'percent' and value is not None:
+                    value = float(value)  # Keep as percentage
+                elif config['type'] == 'none':
+                    value = None
+                
+                members.append({
+                    'user_id': int(config['user_id']),
+                    'type': config['type'],
+                    'value': value
+                })
+            
+            # Compute custom splits
+            try:
+                split_results = compute_custom_splits(total_cents, members)
+            except SplitError as e:
+                conn.close()
+                return jsonify({'error': f'Custom split error: {str(e)}'}), 400
+            
+            # Convert results back to dollars for storage
+            split_details = {str(r['user_id']): r['amount_cents'] / 100.0 for r in split_results}
+            
+        else:
+            # For non-custom methods, validate split details as before
+            # Validate split details match participants
+            if len(split_details) != len(participants):
+                conn.close()
+                return jsonify({'error': 'Split details must match number of participants'}), 400
+            
+            # Validate split details sum equals amount (with small tolerance for rounding)
+            total_split = sum(float(amt) for amt in split_details.values())
+            if abs(total_split - amount) > 0.01:
+                conn.close()
+                return jsonify({'error': 'Split details must sum to the total amount'}), 400
         
         # Add expense
         now = datetime.now().isoformat()

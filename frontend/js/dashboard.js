@@ -629,6 +629,42 @@ function handleSplitMethodChange() {
                 <input type="number" min="0" step="0.01" placeholder="0.00" 
                        class="exact-amount-input" data-participant-id="${participant.id}">
             `;
+        } else if (splitMethod.value === 'custom') {
+            splitItem.innerHTML = `
+                <label>${participant.name}</label>
+                <select class="custom-split-type" data-participant-id="${participant.id}" style="margin-right: 10px;">
+                    <option value="none">Split remainder</option>
+                    <option value="amount">Fixed amount</option>
+                    <option value="percent">Percentage</option>
+                </select>
+                <input type="number" min="0" step="0.01" placeholder="0.00" 
+                        class="custom-split-value" data-participant-id="${participant.id}" style="display: none;">
+            `;
+            
+            // Show/hide value input based on type selection
+            const typeSelect = splitItem.querySelector('.custom-split-type');
+            const valueInput = splitItem.querySelector('.custom-split-value');
+            
+            typeSelect.addEventListener('change', function() {
+                if (this.value === 'none') {
+                    valueInput.style.display = 'none';
+                    valueInput.value = '';
+                    valueInput.placeholder = '';
+                } else if (this.value === 'amount') {
+                    valueInput.style.display = 'inline-block';
+                    valueInput.placeholder = '0.00';
+                    valueInput.step = '0.01';
+                    valueInput.removeAttribute('max');
+                } else if (this.value === 'percent') {
+                    valueInput.style.display = 'inline-block';
+                    valueInput.placeholder = '%';
+                    valueInput.step = '0.01';
+                    valueInput.max = '100';
+                }
+                validateCustomSplit();
+            });
+            
+            valueInput.addEventListener('input', validateCustomSplit);
         }
         
         splitDetails.appendChild(splitItem);
@@ -645,6 +681,8 @@ function handleSplitMethodChange() {
         exactInputs.forEach(input => {
             input.addEventListener('input', validateExactAmounts);
         });
+    } else if (splitMethod.value === 'custom') {
+        validateCustomSplit();
     }
 }
 
@@ -701,6 +739,68 @@ function validateExactAmounts() {
         validationDiv.classList.add('valid');
     }
     
+    const splitDetails = document.getElementById('splitDetails');
+    splitDetails.appendChild(validationDiv);
+}
+
+function validateCustomSplit() {
+    const expenseAmount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+    const typeSelects = document.querySelectorAll('.custom-split-type');
+    const valueInputs = document.querySelectorAll('.custom-split-value');
+    
+    // Remove existing validation message
+    const existingValidation = document.querySelector('.split-validation');
+    if (existingValidation) {
+        existingValidation.remove();
+    }
+    
+    let totalAmount = 0;
+    let totalPercent = 0;
+    let hasNone = false;
+    
+    typeSelects.forEach((typeSelect, index) => {
+        const valueInput = valueInputs[index];
+        const type = typeSelect.value;
+        const value = parseFloat(valueInput.value) || 0;
+        
+        if (type === 'amount') {
+            totalAmount += value;
+        } else if (type === 'percent') {
+            totalPercent += value;
+        } else if (type === 'none') {
+            hasNone = true;
+        }
+    });
+    
+    const validationDiv = document.createElement('div');
+    validationDiv.className = 'split-validation';
+    
+    let isValid = true;
+    let message = '';
+    
+    if (totalAmount > expenseAmount) {
+        isValid = false;
+        message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
+    } else if (totalPercent > 100) {
+        isValid = false;
+        message = `Total percentage exceeds 100% (${totalPercent.toFixed(2)}%)`;
+    } else if (!hasNone && totalAmount + (expenseAmount * totalPercent / 100) > expenseAmount + 0.01) {
+        isValid = false;
+        const calculatedPercentAmount = expenseAmount * totalPercent / 100;
+        message = `Total ($${totalAmount.toFixed(2)} + $${calculatedPercentAmount.toFixed(2)}) exceeds expense amount`;
+    } else if (hasNone) {
+        message = `Fixed: $${totalAmount.toFixed(2)}, Percent: ${totalPercent.toFixed(2)}%, Remainder will be split`;
+        validationDiv.classList.add('valid');
+    } else {
+        message = 'Split configuration looks good ✓';
+        validationDiv.classList.add('valid');
+    }
+    
+    if (!isValid) {
+        validationDiv.classList.remove('valid');
+    }
+    
+    validationDiv.textContent = message;
     const splitDetails = document.getElementById('splitDetails');
     splitDetails.appendChild(validationDiv);
 }
@@ -779,7 +879,8 @@ async function handleAddExpense() {
     }
     
     // Calculate split details
-    const splitDetails = {};
+    let splitDetails = {};
+    let splitConfig = null;
     
     if (splitMethod === 'equal') {
         const shareAmount = amount / participants.length;
@@ -814,6 +915,24 @@ async function handleAddExpense() {
             const exactAmount = parseFloat(input.value) || 0;
             splitDetails[participantId] = exactAmount;
         });
+    } else if (splitMethod === 'custom') {
+        // Build split_config for custom splits
+        splitConfig = [];
+        const typeSelects = document.querySelectorAll('.custom-split-type');
+        const valueInputs = document.querySelectorAll('.custom-split-value');
+        
+        typeSelects.forEach((typeSelect, index) => {
+            const participantId = parseInt(typeSelect.dataset.participantId);
+            const type = typeSelect.value;
+            const valueInput = valueInputs[index];
+            const value = type === 'none' ? null : (parseFloat(valueInput.value) || 0);
+            
+            splitConfig.push({
+                user_id: participantId,
+                type: type,
+                value: value
+            });
+        });
     }
     
     const expenseData = {
@@ -824,6 +943,7 @@ async function handleAddExpense() {
         split_method: splitMethod,
         participants: participants,
         split_details: splitDetails,
+        split_config: splitConfig,  // Add this for custom splits
         note: note,
         date: date,
         category: category,
