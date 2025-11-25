@@ -157,8 +157,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="expenseReceipt">Receipt (optional)</label>
-                    <input type="file" id="expenseReceipt" accept="image/*">
+                    <label for="expenseReceipt">Image/Receipt (optional)</label>
+                    <input type="file" id="expenseReceipt" accept="image/*,.pdf">
+                    <div class="receipt-options">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="expenseReceiptIsReceipt">
+                            <span>This is a receipt (try to auto-detect total)</span>
+                        </label>
+                        <div id="receiptOcrStatus" class="receipt-status-text"></div>
+                    </div>
                 </div>
 
                 <div class="form-group">

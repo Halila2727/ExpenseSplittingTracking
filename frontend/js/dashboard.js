@@ -1,4 +1,8 @@
 // Dashboard functionality
+const receiptAttachmentState = {
+    detectedTotal: null,
+    pending: false
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -7,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add logout functionality
     addLogoutButton();
+    setupReceiptAttachmentHandlers();
 });
 
 async function checkAuthentication() {
@@ -250,6 +255,117 @@ function logout() {
     window.location.href = 'login.html';
 }
 
+function setupReceiptAttachmentHandlers() {
+    const fileInput = document.getElementById('expenseReceipt');
+    const receiptCheckbox = document.getElementById('expenseReceiptIsReceipt');
+    if (!fileInput || !receiptCheckbox) {
+        return;
+    }
+    updateReceiptStatus('Attachment will be shared without OCR unless marked as a receipt.');
+    
+    const requestOcr = async () => {
+        if (!receiptCheckbox.checked) {
+            return;
+        }
+        const file = fileInput.files[0];
+        if (!file) {
+            updateReceiptStatus('Select a receipt image or PDF to scan.');
+            return;
+        }
+        const token = localStorage.getItem('token');
+        if (!token) {
+            updateReceiptStatus('Please log in to scan receipts.', 'error');
+            return;
+        }
+        if (receiptAttachmentState.pending) {
+            return;
+        }
+        receiptAttachmentState.pending = true;
+        updateReceiptStatus('Scanning receipt...');
+        
+        try {
+            const formData = new FormData();
+            formData.append('receipt', file);
+            formData.append('is_receipt', 'true');
+            const response = await fetch('http://localhost:5000/api/expenses/receipt-total', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            const data = await response.json();
+            if (response.ok && typeof data.detected_total === 'number') {
+                receiptAttachmentState.detectedTotal = data.detected_total;
+                const amountInput = document.getElementById('expenseAmount');
+                if (amountInput) {
+                    amountInput.value = Number(data.detected_total).toFixed(2);
+                }
+                updateReceiptStatus(`Detected total: $${Number(data.detected_total).toFixed(2)}`, 'success');
+            } else {
+                receiptAttachmentState.detectedTotal = null;
+                updateReceiptStatus(data.error || 'Unable to detect a total.', 'error');
+            }
+        } catch (error) {
+            console.error('Receipt OCR failed:', error);
+            receiptAttachmentState.detectedTotal = null;
+            updateReceiptStatus('Receipt scan failed. Please enter the amount manually.', 'error');
+        } finally {
+            receiptAttachmentState.pending = false;
+        }
+    };
+    
+    fileInput.addEventListener('change', () => {
+        receiptAttachmentState.detectedTotal = null;
+        if (!fileInput.files.length) {
+            updateReceiptStatus('');
+            return;
+        }
+        if (receiptCheckbox.checked) {
+            requestOcr();
+        } else {
+            updateReceiptStatus('Attachment ready. Check the box to scan as a receipt.');
+        }
+    });
+    
+    receiptCheckbox.addEventListener('change', () => {
+        receiptAttachmentState.detectedTotal = null;
+        if (receiptCheckbox.checked) {
+            requestOcr();
+        } else {
+            updateReceiptStatus('Attachment will be shared without OCR.');
+        }
+    });
+}
+
+function updateReceiptStatus(message, variant = 'neutral') {
+    const statusElement = document.getElementById('receiptOcrStatus');
+    if (!statusElement) return;
+    statusElement.textContent = message || '';
+    statusElement.className = 'receipt-status-text';
+    if (variant === 'success') {
+        statusElement.classList.add('success');
+    } else if (variant === 'error') {
+        statusElement.classList.add('error');
+    }
+}
+
+function resetReceiptAttachmentState(clearInputs = false) {
+    receiptAttachmentState.detectedTotal = null;
+    receiptAttachmentState.pending = false;
+    updateReceiptStatus('');
+    if (clearInputs) {
+        const fileInput = document.getElementById('expenseReceipt');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        const checkbox = document.getElementById('expenseReceiptIsReceipt');
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    }
+}
+
 // Modal functionality
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -295,6 +411,9 @@ function closeModal(modalId) {
                 payeeSelect.disabled = true;
                 payeeSelect.innerHTML = '<option value="">Select payee</option>';
             }
+        }
+        if (modalId === 'addExpenseModal') {
+            resetReceiptAttachmentState(true);
         }
     }
 }
@@ -861,6 +980,8 @@ async function handleAddExpense() {
     const date = document.getElementById('expenseDate').value;
     const category = document.getElementById('expenseCategory').value;
     const currency = document.getElementById('expenseCurrency').value;
+    const attachmentInput = document.getElementById('expenseReceipt');
+    const receiptCheckbox = document.getElementById('expenseReceiptIsReceipt');
     
     // Validate required fields
     if (!amount || !description || !groupId || !paidBy || !splitMethod) {
@@ -951,19 +1072,39 @@ async function handleAddExpense() {
     };
     
     try {
+        const formData = new FormData();
+        Object.entries(expenseData).forEach(([key, value]) => {
+            if (value === undefined || value === null) {
+                return;
+            }
+            if (Array.isArray(value) || typeof value === 'object') {
+                formData.append(key, JSON.stringify(value));
+            } else {
+                formData.append(key, value);
+            }
+        });
+
+        if (attachmentInput && attachmentInput.files.length > 0) {
+            formData.append('attachment', attachmentInput.files[0]);
+            formData.append('is_receipt_attachment', receiptCheckbox && receiptCheckbox.checked ? 'true' : 'false');
+            if (typeof receiptAttachmentState.detectedTotal === 'number') {
+                formData.append('ocr_total', receiptAttachmentState.detectedTotal);
+            }
+        }
+        
         const response = await fetch('http://localhost:5000/api/expenses', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(expenseData)
+            body: formData
         });
         
         const data = await response.json();
         
         if (response.ok) {
             closeModal('addExpenseModal');
+             resetReceiptAttachmentState(true);
             alert('Expense added successfully!');
             // Reload balance data to reflect the new expense
             loadBalanceData();
