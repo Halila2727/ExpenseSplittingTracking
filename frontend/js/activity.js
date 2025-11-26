@@ -339,14 +339,14 @@ function createActivityDetails(activity) {
     paidByRow.className = 'activity-detail-row';
     paidByRow.innerHTML = `
         <span class="label">Paid by</span>
-        <span>${activity.paid_by || 'Unknown'}</span>
+        <span class = "payer-name">${activity.paid_by || 'Unknown'}</span>
     `;
     
     const totalRow = document.createElement('div');
     totalRow.className = 'activity-detail-row';
     totalRow.innerHTML = `
         <span class="label">Total</span>
-        <span>${formatCurrency(activity.amount)}</span>
+        <span class = "total-transaction-bal">${formatCurrency(activity.amount)}</span>
     `;
     
     const splitSection = document.createElement('div');
