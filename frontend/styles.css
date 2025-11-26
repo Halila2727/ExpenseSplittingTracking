@@ -1702,6 +1702,7 @@ footer {
     justify-content: center;
     transition: background 0.2s;
     flex-shrink: 0;
+    padding-bottom:9px;
 }
 
     .btn-back:hover {
@@ -2198,6 +2199,12 @@ body.dark-mode h6 {
     color: #ffffff;
 }
 
+body.dark-mode .login-form,
+body.dark-mode label{
+    background-color:#2a2a2a;
+    color:#ffffff;
+}
+
 /* Dashboard container */
 body.dark-mode .dashboard,
 body.dark-mode .balance-title{
@@ -2220,12 +2227,19 @@ body.dark-mode .subnav-link{
 body.dark-mode .subnav-link.active{
     background-color : #3a3a3a;
 }
+body.dark-mode .breakdown-card.owe .amount{
+    color: #e43434;
+}
+body.dark-mode .balance-amount,
+body.dark-mode .breakdown-card.owed .amount{
+    color: #3b853b;
+}
 
 /* Add and Settle Expense modals */
 body.dark-mode .modal-header{
     background-color: #2a2a2a;
 }
-/* Changing text color back */
+/* Changing text color back to default */
 body.dark-mode #addCurrencyType, /* Currency Prefix */
 body.dark-mode #settleCurrencyType,
 body.dark-mode .split-details, /* Split method dropdown */
@@ -2234,17 +2248,63 @@ body.dark-mode .split-details h4{
 }
 
 /*Recent Activity*/
-body.dark-mode .activity,
-body.dark-mode .activity-list.activity-list{
+body.dark-mode .activity{
     background-color: #121212;
     color: #ffffff;
+}
+
+body.dark-mode .activity-item{
+    background-color: #2a2a2a;
+}
+body.dark-mode .activity-amount{
+    color:#e43434;
+}
+body.dark-mode .activity-description,
+body.dark-mode .participant,
+body.dark-mode .label,
+body.dark-mode .activity-memo-box{
+    color: #acacac;
+}
+body.dark-mode .payer-name,
+body.dark-mode .total-transaction-bal{
+    color:#acacac;
+}
+body.dark-mode .amount {
+    color:#ffffff;
 }
 
 /* Groups */
 body.dark-mode .group-card{
     background-color: #2a2a2a;
 }
+/* Group Details */
+body.dark-mode .balances-panel,
+body.dark-mode .activity-panel{
+    background-color: #121212;
+}
+/* Left side, should be same format as recent activities 'activity-item'*/
+body.dark-mode .member-balance-item{
+    background-color: #2a2a2a;
+}
+body.dark-mode .member-name{
+    color: #acacac;
+}
+body.dark-mode .member-balance-item .balance-amount.owes-amount{
+    color:#e43434;
+}
+body.dark-mode .member-balance-item .balance-amount.owed-amount{
+    color:#3b853b;
+}
 
-body.dark-mode .profile-card{
-    background-color: #8B8B8B;
+/* Personal */
+body.dark-mode .profile-card,
+body.dark-mode .profile-form-section{
+    background-color: #2a2a2a;
+}
+body.dark-mode .stat-label,
+body.dark-mode .profile-form-section label{
+    color: #cccccc;
+}
+body.dark-mode .stat-value {
+    color: #ffffff;
 }
