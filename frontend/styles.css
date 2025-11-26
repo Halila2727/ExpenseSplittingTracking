@@ -2200,7 +2200,7 @@ body.dark-mode h6 {
 }
 
 body.dark-mode .login-form,
-body.dark-mode label{
+body.dark-mode .login-form label{
     background-color:#2a2a2a;
     color:#ffffff;
 }
