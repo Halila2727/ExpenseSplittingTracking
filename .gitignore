@@ -67,3 +67,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Uploaded receipt files
+backend/uploads/*
+!backend/uploads/.gitkeep
+

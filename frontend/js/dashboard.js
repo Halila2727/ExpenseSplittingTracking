@@ -1,4 +1,8 @@
 // Dashboard functionality
+const receiptAttachmentState = {
+    detectedTotal: null,
+    pending: false
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -7,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add logout functionality
     addLogoutButton();
+    setupReceiptAttachmentHandlers();
 });
 
 async function checkAuthentication() {
@@ -53,6 +58,9 @@ async function checkAuthentication() {
         
         // Load groups data
         loadGroupsData();
+        
+        // Load unpaid expenses alerts
+        loadUnpaidExpenses();
         
     } catch (error) {
         console.error('Authentication check failed:', error);
@@ -250,6 +258,117 @@ function logout() {
     window.location.href = 'login.html';
 }
 
+function setupReceiptAttachmentHandlers() {
+    const fileInput = document.getElementById('expenseReceipt');
+    const receiptCheckbox = document.getElementById('expenseReceiptIsReceipt');
+    if (!fileInput || !receiptCheckbox) {
+        return;
+    }
+    updateReceiptStatus('Attachment will be shared without OCR unless marked as a receipt.');
+    
+    const requestOcr = async () => {
+        if (!receiptCheckbox.checked) {
+            return;
+        }
+        const file = fileInput.files[0];
+        if (!file) {
+            updateReceiptStatus('Select a receipt image or PDF to scan.');
+            return;
+        }
+        const token = localStorage.getItem('token');
+        if (!token) {
+            updateReceiptStatus('Please log in to scan receipts.', 'error');
+            return;
+        }
+        if (receiptAttachmentState.pending) {
+            return;
+        }
+        receiptAttachmentState.pending = true;
+        updateReceiptStatus('Scanning receipt...');
+        
+        try {
+            const formData = new FormData();
+            formData.append('receipt', file);
+            formData.append('is_receipt', 'true');
+            const response = await fetch('http://localhost:5000/api/expenses/receipt-total', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            const data = await response.json();
+            if (response.ok && typeof data.detected_total === 'number') {
+                receiptAttachmentState.detectedTotal = data.detected_total;
+                const amountInput = document.getElementById('expenseAmount');
+                if (amountInput) {
+                    amountInput.value = Number(data.detected_total).toFixed(2);
+                }
+                updateReceiptStatus(`Detected total: $${Number(data.detected_total).toFixed(2)}`, 'success');
+            } else {
+                receiptAttachmentState.detectedTotal = null;
+                updateReceiptStatus(data.error || 'Unable to detect a total.', 'error');
+            }
+        } catch (error) {
+            console.error('Receipt OCR failed:', error);
+            receiptAttachmentState.detectedTotal = null;
+            updateReceiptStatus('Receipt scan failed. Please enter the amount manually.', 'error');
+        } finally {
+            receiptAttachmentState.pending = false;
+        }
+    };
+    
+    fileInput.addEventListener('change', () => {
+        receiptAttachmentState.detectedTotal = null;
+        if (!fileInput.files.length) {
+            updateReceiptStatus('');
+            return;
+        }
+        if (receiptCheckbox.checked) {
+            requestOcr();
+        } else {
+            updateReceiptStatus('Attachment ready. Check the box to scan as a receipt.');
+        }
+    });
+    
+    receiptCheckbox.addEventListener('change', () => {
+        receiptAttachmentState.detectedTotal = null;
+        if (receiptCheckbox.checked) {
+            requestOcr();
+        } else {
+            updateReceiptStatus('Attachment will be shared without OCR.');
+        }
+    });
+}
+
+function updateReceiptStatus(message, variant = 'neutral') {
+    const statusElement = document.getElementById('receiptOcrStatus');
+    if (!statusElement) return;
+    statusElement.textContent = message || '';
+    statusElement.className = 'receipt-status-text';
+    if (variant === 'success') {
+        statusElement.classList.add('success');
+    } else if (variant === 'error') {
+        statusElement.classList.add('error');
+    }
+}
+
+function resetReceiptAttachmentState(clearInputs = false) {
+    receiptAttachmentState.detectedTotal = null;
+    receiptAttachmentState.pending = false;
+    updateReceiptStatus('');
+    if (clearInputs) {
+        const fileInput = document.getElementById('expenseReceipt');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        const checkbox = document.getElementById('expenseReceiptIsReceipt');
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    }
+}
+
 // Modal functionality
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
@@ -295,6 +414,9 @@ function closeModal(modalId) {
                 payeeSelect.disabled = true;
                 payeeSelect.innerHTML = '<option value="">Select payee</option>';
             }
+        }
+        if (modalId === 'addExpenseModal') {
+            resetReceiptAttachmentState(true);
         }
     }
 }
@@ -629,6 +751,42 @@ function handleSplitMethodChange() {
                 <input type="number" min="0" step="0.01" placeholder="0.00" 
                        class="exact-amount-input" data-participant-id="${participant.id}">
             `;
+        } else if (splitMethod.value === 'custom') {
+            splitItem.innerHTML = `
+                <label>${participant.name}</label>
+                <select class="custom-split-type" data-participant-id="${participant.id}" style="margin-right: 10px;">
+                    <option value="none">Split remainder</option>
+                    <option value="amount">Fixed amount</option>
+                    <option value="percent">Percentage</option>
+                </select>
+                <input type="number" min="0" step="0.01" placeholder="0.00" 
+                        class="custom-split-value" data-participant-id="${participant.id}" style="display: none;">
+            `;
+            
+            // Show/hide value input based on type selection
+            const typeSelect = splitItem.querySelector('.custom-split-type');
+            const valueInput = splitItem.querySelector('.custom-split-value');
+            
+            typeSelect.addEventListener('change', function() {
+                if (this.value === 'none') {
+                    valueInput.style.display = 'none';
+                    valueInput.value = '';
+                    valueInput.placeholder = '';
+                } else if (this.value === 'amount') {
+                    valueInput.style.display = 'inline-block';
+                    valueInput.placeholder = '0.00';
+                    valueInput.step = '0.01';
+                    valueInput.removeAttribute('max');
+                } else if (this.value === 'percent') {
+                    valueInput.style.display = 'inline-block';
+                    valueInput.placeholder = '%';
+                    valueInput.step = '0.01';
+                    valueInput.max = '100';
+                }
+                validateCustomSplit();
+            });
+            
+            valueInput.addEventListener('input', validateCustomSplit);
         }
         
         splitDetails.appendChild(splitItem);
@@ -645,6 +803,8 @@ function handleSplitMethodChange() {
         exactInputs.forEach(input => {
             input.addEventListener('input', validateExactAmounts);
         });
+    } else if (splitMethod.value === 'custom') {
+        validateCustomSplit();
     }
 }
 
@@ -705,6 +865,85 @@ function validateExactAmounts() {
     splitDetails.appendChild(validationDiv);
 }
 
+function validateCustomSplit() {
+    const expenseAmount = parseFloat(document.getElementById('expenseAmount').value) || 0;
+    const typeSelects = document.querySelectorAll('.custom-split-type');
+    const valueInputs = document.querySelectorAll('.custom-split-value');
+    
+    // Remove existing validation message
+    const existingValidation = document.querySelector('.split-validation');
+    if (existingValidation) {
+        existingValidation.remove();
+    }
+    
+    let totalAmount = 0;
+    let totalPercent = 0;
+    let hasNone = false;
+    
+    typeSelects.forEach((typeSelect, index) => {
+        const valueInput = valueInputs[index];
+        const type = typeSelect.value;
+        const value = parseFloat(valueInput.value) || 0;
+        
+        if (type === 'amount') {
+            totalAmount += value;
+        } else if (type === 'percent') {
+            totalPercent += value;
+        } else if (type === 'none') {
+            hasNone = true;
+        }
+    });
+    
+    const validationDiv = document.createElement('div');
+    validationDiv.className = 'split-validation';
+    
+    let isValid = true;
+    let message = '';
+    
+    // Calculate remaining amount after fixed amounts
+    const remainingAfterAmounts = expenseAmount - totalAmount;
+    
+    if (totalAmount > expenseAmount) {
+        isValid = false;
+        message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
+    } else if (remainingAfterAmounts < 0) {
+        isValid = false;
+        message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
+    } else if (totalPercent > 100) {
+        isValid = false;
+        message = `Total percentage exceeds 100% (${totalPercent.toFixed(2)}%)`;
+    } else {
+        // Calculate percentage amounts on the remaining amount (after fixed amounts)
+        const calculatedPercentAmount = remainingAfterAmounts * totalPercent / 100;
+        const totalAfterAmountAndPercent = totalAmount + calculatedPercentAmount;
+        const remainder = expenseAmount - totalAfterAmountAndPercent;
+        
+        if (!hasNone && Math.abs(remainder) > 0.01) {
+            if (totalAfterAmountAndPercent > expenseAmount + 0.01) {
+                isValid = false;
+                message = `Total ($${totalAmount.toFixed(2)} fixed + $${calculatedPercentAmount.toFixed(2)} from ${totalPercent.toFixed(2)}%) exceeds expense amount`;
+            } else {
+                isValid = false;
+                message = `Total ($${totalAmount.toFixed(2)} fixed + $${calculatedPercentAmount.toFixed(2)} from ${totalPercent.toFixed(2)}%) = $${totalAfterAmountAndPercent.toFixed(2)}, remainder: $${remainder.toFixed(2)}. Add "Split remainder" option to allocate remainder.`;
+            }
+        } else if (hasNone) {
+            message = `Fixed: $${totalAmount.toFixed(2)}, Percent: ${totalPercent.toFixed(2)}% of remaining ($${remainingAfterAmounts.toFixed(2)}) = $${calculatedPercentAmount.toFixed(2)}, Remainder: $${remainder.toFixed(2)} will be split`;
+            validationDiv.classList.add('valid');
+        } else {
+            message = 'Split configuration looks good ✓';
+            validationDiv.classList.add('valid');
+        }
+    }
+    
+    if (!isValid) {
+        validationDiv.classList.remove('valid');
+    }
+    
+    validationDiv.textContent = message;
+    const splitDetails = document.getElementById('splitDetails');
+    splitDetails.appendChild(validationDiv);
+}
+
 // Add expense functionality
 function addExpense() {
     openModal('addExpenseModal');
@@ -761,6 +1000,8 @@ async function handleAddExpense() {
     const date = document.getElementById('expenseDate').value;
     const category = document.getElementById('expenseCategory').value;
     const currency = document.getElementById('expenseCurrency').value;
+    const attachmentInput = document.getElementById('expenseReceipt');
+    const receiptCheckbox = document.getElementById('expenseReceiptIsReceipt');
     
     // Validate required fields
     if (!amount || !description || !groupId || !paidBy || !splitMethod) {
@@ -779,7 +1020,8 @@ async function handleAddExpense() {
     }
     
     // Calculate split details
-    const splitDetails = {};
+    let splitDetails = {};
+    let splitConfig = null;
     
     if (splitMethod === 'equal') {
         const shareAmount = amount / participants.length;
@@ -814,6 +1056,24 @@ async function handleAddExpense() {
             const exactAmount = parseFloat(input.value) || 0;
             splitDetails[participantId] = exactAmount;
         });
+    } else if (splitMethod === 'custom') {
+        // Build split_config for custom splits
+        splitConfig = [];
+        const typeSelects = document.querySelectorAll('.custom-split-type');
+        const valueInputs = document.querySelectorAll('.custom-split-value');
+        
+        typeSelects.forEach((typeSelect, index) => {
+            const participantId = parseInt(typeSelect.dataset.participantId);
+            const type = typeSelect.value;
+            const valueInput = valueInputs[index];
+            const value = type === 'none' ? null : (parseFloat(valueInput.value) || 0);
+            
+            splitConfig.push({
+                user_id: participantId,
+                type: type,
+                value: value
+            });
+        });
     }
     
     const expenseData = {
@@ -824,6 +1084,7 @@ async function handleAddExpense() {
         split_method: splitMethod,
         participants: participants,
         split_details: splitDetails,
+        split_config: splitConfig,  // Add this for custom splits
         note: note,
         date: date,
         category: category,
@@ -831,22 +1092,44 @@ async function handleAddExpense() {
     };
     
     try {
+        const formData = new FormData();
+        Object.entries(expenseData).forEach(([key, value]) => {
+            if (value === undefined || value === null) {
+                return;
+            }
+            if (Array.isArray(value) || typeof value === 'object') {
+                formData.append(key, JSON.stringify(value));
+            } else {
+                formData.append(key, value);
+            }
+        });
+
+        if (attachmentInput && attachmentInput.files.length > 0) {
+            formData.append('attachment', attachmentInput.files[0]);
+            formData.append('is_receipt_attachment', receiptCheckbox && receiptCheckbox.checked ? 'true' : 'false');
+            if (typeof receiptAttachmentState.detectedTotal === 'number') {
+                formData.append('ocr_total', receiptAttachmentState.detectedTotal);
+            }
+        }
+        
         const response = await fetch('http://localhost:5000/api/expenses', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(expenseData)
+            body: formData
         });
         
         const data = await response.json();
         
         if (response.ok) {
             closeModal('addExpenseModal');
+             resetReceiptAttachmentState(true);
             alert('Expense added successfully!');
             // Reload balance data to reflect the new expense
             loadBalanceData();
+            // Reload unpaid expenses
+            loadUnpaidExpenses();
         } else {
             alert(`Error: ${data.error}`);
         }
@@ -916,12 +1199,196 @@ async function handleSettleExpense() {
             alert('Payment recorded successfully!');
             // Reload balance data to reflect the payment
             loadBalanceData();
+            // Reload unpaid expenses
+            loadUnpaidExpenses();
         } else {
             alert(`Error: ${data.error}`);
         }
     } catch (error) {
         console.error('Failed to record payment:', error);
         alert('Failed to record payment. Please try again.');
+    }
+}
+
+// Unpaid expenses functionality
+async function loadUnpaidExpenses() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        console.error('No authentication token available');
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/unpaid-expenses', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        displayUnpaidExpenses(data);
+        
+    } catch (error) {
+        console.error('Failed to load unpaid expenses:', error);
+        // Hide the container on error
+        const container = document.getElementById('unpaid-expenses-alerts');
+        if (container) {
+            container.style.display = 'none';
+        }
+    }
+}
+
+function displayUnpaidExpenses(data) {
+    const container = document.getElementById('unpaid-expenses-alerts');
+    
+    if (!container) {
+        console.error('Unpaid expenses container not found');
+        return;
+    }
+    
+    if (!data.unpaid_expenses || data.unpaid_expenses.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    // Show container
+    container.style.display = 'block';
+    
+    // Ensure header exists (it should be in HTML, but create if missing)
+    let header = container.querySelector('.unpaid-expenses-header');
+    if (!header) {
+        header = document.createElement('div');
+        header.className = 'unpaid-expenses-header';
+        const title = document.createElement('h2');
+        title.className = 'unpaid-expenses-title';
+        title.textContent = 'Warning! It has been more than 2 days and...';
+        header.appendChild(title);
+        container.insertBefore(header, container.firstChild);
+    }
+    
+    // Find or create the list container
+    let listContainer = container.querySelector('.unpaid-expenses-list');
+    if (!listContainer) {
+        listContainer = document.createElement('div');
+        listContainer.className = 'unpaid-expenses-list';
+        container.appendChild(listContainer);
+    }
+    
+    // Clear existing content in list only (preserve header)
+    listContainer.innerHTML = '';
+    
+    // Create alert items for each lender
+    data.unpaid_expenses.forEach((lenderData) => {
+        const item = createUnpaidExpenseItem(lenderData);
+        listContainer.appendChild(item);
+    });
+}
+
+function createUnpaidExpenseItem(lenderData) {
+    const item = document.createElement('div');
+    item.className = 'unpaid-expense-item';
+    item.setAttribute('tabindex', '0');
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'unpaid-expense-header';
+    
+    // Content
+    const content = document.createElement('div');
+    content.className = 'unpaid-expense-content';
+    
+    const description = document.createElement('div');
+    description.className = 'unpaid-expense-description';
+    description.textContent = `You still owe ${lenderData.lender_name}`;
+    
+    content.appendChild(description);
+    
+    // Amount
+    const amount = document.createElement('div');
+    amount.className = 'unpaid-expense-amount';
+    amount.textContent = `$${lenderData.total_amount.toFixed(2)}`;
+    
+    // Toggle button
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'unpaid-expense-toggle';
+    toggleButton.setAttribute('aria-label', 'Toggle expense details');
+    toggleButton.setAttribute('aria-expanded', 'false');
+    toggleButton.innerHTML = `
+        <span class="chevron"></span>
+    `;
+    
+    header.appendChild(content);
+    header.appendChild(amount);
+    header.appendChild(toggleButton);
+    
+    // Details
+    const details = document.createElement('div');
+    details.className = 'unpaid-expense-details';
+    details.setAttribute('aria-hidden', 'true');
+    
+    // Add individual expense details
+    lenderData.expenses.forEach((expense) => {
+        const detailItem = document.createElement('div');
+        detailItem.className = 'unpaid-expense-detail-item';
+        
+        const detailText = document.createElement('div');
+        detailText.className = 'unpaid-expense-detail-text';
+        detailText.textContent = `You owe ${lenderData.lender_name} $${expense.amount.toFixed(2)} for ${expense.description} in ${expense.group_name}`;
+        
+        const detailAmount = document.createElement('div');
+        detailAmount.className = 'unpaid-expense-detail-amount';
+        detailAmount.textContent = `$${expense.amount.toFixed(2)}`;
+        
+        detailItem.appendChild(detailText);
+        detailItem.appendChild(detailAmount);
+        details.appendChild(detailItem);
+    });
+    
+    item.appendChild(header);
+    item.appendChild(details);
+    
+    // Event handlers
+    toggleButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleUnpaidExpenseDetails(item);
+    });
+    
+    item.addEventListener('click', (event) => {
+        if (event.target.closest('.unpaid-expense-details')) {
+            return;
+        }
+        toggleUnpaidExpenseDetails(item);
+    });
+    
+    item.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleUnpaidExpenseDetails(item);
+        }
+    });
+    
+    return item;
+}
+
+function toggleUnpaidExpenseDetails(item) {
+    const isExpanded = item.classList.toggle('expanded');
+    const details = item.querySelector('.unpaid-expense-details');
+    const toggleButton = item.querySelector('.unpaid-expense-toggle');
+    
+    if (details) {
+        details.setAttribute('aria-hidden', String(!isExpanded));
+    }
+    if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', String(isExpanded));
     }
 }
 

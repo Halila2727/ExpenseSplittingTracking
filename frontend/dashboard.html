@@ -6,6 +6,7 @@
     <title>Centsible - Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
     <style>
         .expense-input {
             width: 100%;
@@ -54,6 +55,20 @@
                     <h3>You are owed</h3>
                     <div class="amount">$0.00</div>
                     <p class="note">in green</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Unpaid Expenses Alerts -->
+    <section class="unpaid-expenses-section">
+        <div class="container">
+            <div id="unpaid-expenses-alerts" class="unpaid-expenses-container" style="display: none;">
+                <div class="unpaid-expenses-header">
+                    <h2 class="unpaid-expenses-title">Warning! It has been more than 2 days and...</h2>
+                </div>
+                <div class="unpaid-expenses-list">
+                    <!-- Alerts will be dynamically populated here -->
                 </div>
             </div>
         </div>
@@ -148,6 +163,7 @@
                         <option value="equal">Split equally</option>
                         <option value="percentage">Split by percentage</option>
                         <option value="exact">Split by exact amount</option>
+                        <option value="custom">Custom (mix amount & percentage)</option>
                     </select>
                 </div>
 
@@ -156,8 +172,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="expenseReceipt">Receipt (optional)</label>
-                    <input type="file" id="expenseReceipt" accept="image/*">
+                    <label for="expenseReceipt">Image/Receipt (optional)</label>
+                    <input type="file" id="expenseReceipt" accept="image/*,.pdf">
+                    <div class="receipt-options">
+                        <label class="checkbox-inline">
+                            <input type="checkbox" id="expenseReceiptIsReceipt">
+                            <span>This is a receipt (try to auto-detect total)</span>
+                        </label>
+                        <div id="receiptOcrStatus" class="receipt-status-text"></div>
+                    </div>
                 </div>
 
                 <div class="form-group">
