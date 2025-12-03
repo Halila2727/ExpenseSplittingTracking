@@ -897,22 +897,39 @@ function validateCustomSplit() {
     let isValid = true;
     let message = '';
     
+    // Calculate remaining amount after fixed amounts
+    const remainingAfterAmounts = expenseAmount - totalAmount;
+    
     if (totalAmount > expenseAmount) {
+        isValid = false;
+        message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
+    } else if (remainingAfterAmounts < 0) {
         isValid = false;
         message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
     } else if (totalPercent > 100) {
         isValid = false;
         message = `Total percentage exceeds 100% (${totalPercent.toFixed(2)}%)`;
-    } else if (!hasNone && totalAmount + (expenseAmount * totalPercent / 100) > expenseAmount + 0.01) {
-        isValid = false;
-        const calculatedPercentAmount = expenseAmount * totalPercent / 100;
-        message = `Total ($${totalAmount.toFixed(2)} + $${calculatedPercentAmount.toFixed(2)}) exceeds expense amount`;
-    } else if (hasNone) {
-        message = `Fixed: $${totalAmount.toFixed(2)}, Percent: ${totalPercent.toFixed(2)}%, Remainder will be split`;
-        validationDiv.classList.add('valid');
     } else {
-        message = 'Split configuration looks good ✓';
-        validationDiv.classList.add('valid');
+        // Calculate percentage amounts on the remaining amount (after fixed amounts)
+        const calculatedPercentAmount = remainingAfterAmounts * totalPercent / 100;
+        const totalAfterAmountAndPercent = totalAmount + calculatedPercentAmount;
+        const remainder = expenseAmount - totalAfterAmountAndPercent;
+        
+        if (!hasNone && Math.abs(remainder) > 0.01) {
+            if (totalAfterAmountAndPercent > expenseAmount + 0.01) {
+                isValid = false;
+                message = `Total ($${totalAmount.toFixed(2)} fixed + $${calculatedPercentAmount.toFixed(2)} from ${totalPercent.toFixed(2)}%) exceeds expense amount`;
+            } else {
+                isValid = false;
+                message = `Total ($${totalAmount.toFixed(2)} fixed + $${calculatedPercentAmount.toFixed(2)} from ${totalPercent.toFixed(2)}%) = $${totalAfterAmountAndPercent.toFixed(2)}, remainder: $${remainder.toFixed(2)}. Add "Split remainder" option to allocate remainder.`;
+            }
+        } else if (hasNone) {
+            message = `Fixed: $${totalAmount.toFixed(2)}, Percent: ${totalPercent.toFixed(2)}% of remaining ($${remainingAfterAmounts.toFixed(2)}) = $${calculatedPercentAmount.toFixed(2)}, Remainder: $${remainder.toFixed(2)} will be split`;
+            validationDiv.classList.add('valid');
+        } else {
+            message = 'Split configuration looks good ✓';
+            validationDiv.classList.add('valid');
+        }
     }
     
     if (!isValid) {

@@ -17,15 +17,21 @@ def compute_custom_splits(total_cents: int, members: List[Dict]) -> List[Dict]:
     if sum_amounts > total_cents:
         raise SplitError("Sum of explicit amounts exceeds total")
 
+    # Calculate remaining amount after fixed amounts are subtracted
+    remaining_after_amounts = total_cents - sum_amounts
+    if remaining_after_amounts < 0:
+        raise SplitError("Sum of explicit amounts exceeds total")
+
     percent_sum = sum(float(m.get('value') or 0) for m in percent_members)
     if percent_sum > 100.000001:  # small epsilon
         raise SplitError("Sum of percentages exceeds 100%")
 
     # Allocate percent-based members (round to cents)
+    # Percentages are calculated on the remaining amount after fixed amounts
     percent_allocs = []
     for m in percent_members:
         pct = float(m.get('value') or 0)
-        cents = int(round(total_cents * (pct / 100.0)))
+        cents = int(round(remaining_after_amounts * (pct / 100.0)))
         percent_allocs.append({'user_id': m['user_id'], 'amount_cents': cents, 'pct': pct})
 
     sum_percent_cents = sum(p['amount_cents'] for p in percent_allocs)
