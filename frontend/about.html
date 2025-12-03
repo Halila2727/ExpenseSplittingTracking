@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!--<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">-->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- <title>Centsible - Expense Tracking & Splitting</title> -->
@@ -29,21 +29,6 @@
             margin-top: 20px;
             width:80%;
         }
-/*        .about-paragraph-header {
-            font-weight: bold;
-            font-size: 20px;
-            text-decoration-line: underline;
-            margin: auto;
-            text-align:center;
-            width: 50%;
-            margin-top:80px;
-        }
-        .about-text {
-            margin: auto;
-            width: 30%;
-            margin-top: 50px;
-            background-color: #e2e2e2;
-        }*/
     </style>
 </head>
 <body>
@@ -51,8 +36,15 @@
         <div class="container">
             <nav>
                 <div class="logo">
-                    <img src="images/CentsibleLogoNoText.png" alt="Centsible Logo" class="logo-image">
-                    Centsible
+                    <model-viewer src="images/Untitled.glb"
+                                  alt="Centsible Logo"
+                                  class="logo-image"
+                                  auto-rotate
+                                  camera-controls
+                                  ar
+                                  style="width: 50px; height: 50px;">
+                    </model-viewer>
+                    <span class="logo-text">Centsible</span>
                 </div>
                 <ul class="nav-links">
                     <li><a href="index.html">Home</a></li>
@@ -83,7 +75,7 @@
     </div>-->
 
     <div class="about-section">
-        <h2 class ="about-paragraph-header"> About Us</h2>
+        <h2 class="about-paragraph-header"> About Us</h2>
         <p class="about-text">
             We want to provide the best service possible for our customers.
             Centsible was founded with the mission of simplifying personal and group finance management.
@@ -96,5 +88,8 @@
             We aim to empower people to make smarter financial decisions together.
         </p>
     </div>
+
+    <script src="js/components.js"></script>
+    <script src="js/dashboard-theme-toggle.js"></script>
 </body>
 </html>
