@@ -418,10 +418,35 @@ footer {
         color: var(--secondary);
     }
 
+
+/* About-Us Styles */
+.about-section {
+    margin: auto;
+    width: 30%;
+    margin-top: 10%;
+    background-color: #e2e2e2;
+    border-radius: 20px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.about-paragraph-header {
+    font-weight: bold;
+    text-decoration-line: underline;
+    font-size: 20px;
+    text-align: center;
+}
+
+.about-text {
+    margin: auto;
+    margin-top: 20px;
+    width: 80%;
+}
+
 /* Dashboard Styles */
 .dashboard {
-    padding: 2rem 0 4rem;
-    background: var(--dark);
+padding: 2rem 0 4rem;
+background: var(--dark);
 }
 
 .balance-banner {
@@ -2205,6 +2230,10 @@ body.dark-mode .login-form label{
     color:#ffffff;
 }
 
+/* About Us */
+body.dark-mode .about-section {
+    background-color:#2a2a2a;
+}
 /* Dashboard container */
 body.dark-mode .dashboard,
 body.dark-mode .balance-title{
