@@ -806,7 +806,6 @@ def get_recent_activity():
                 AND b.amount > 0
             WHERE e.group_id IN ({placeholders})
             ORDER BY e.created_at DESC
-            LIMIT 20
         """
         
         expenses = conn.execute(expenses_query, [user_id] + group_ids).fetchall()
@@ -821,7 +820,6 @@ def get_recent_activity():
             JOIN groups g ON p.group_id = g.group_id
             WHERE (p.paid_by = ? OR p.paid_to = ?) AND p.group_id IN ({placeholders})
             ORDER BY p.paid_at DESC
-            LIMIT 20
         """
         
         payments = conn.execute(payments_query, [user_id, user_id] + group_ids).fetchall()
@@ -911,9 +909,6 @@ def get_recent_activity():
         
         # Sort all activities by date (most recent first)
         activities.sort(key=lambda x: x['date'], reverse=True)
-        
-        # Limit to 20 most recent activities
-        activities = activities[:20]
         
         return jsonify({
             'activities': activities,
@@ -1771,7 +1766,6 @@ def get_group_activity(group_id):
             JOIN users u ON e.paid_by = u.id
             WHERE e.group_id = ?
             ORDER BY e.created_at DESC
-            LIMIT 20
         """
         
         expenses = conn.execute(expenses_query, (group_id,)).fetchall()
@@ -1785,7 +1779,6 @@ def get_group_activity(group_id):
             JOIN users u2 ON p.paid_to = u2.id
             WHERE p.group_id = ?
             ORDER BY p.paid_at DESC
-            LIMIT 20
         """
         
         payments = conn.execute(payments_query, (group_id,)).fetchall()

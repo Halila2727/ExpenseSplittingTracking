@@ -349,6 +349,13 @@ function createActivityDetails(activity) {
         <span class = "total-transaction-bal">${formatCurrency(activity.amount)}</span>
     `;
     
+    const dateRow = document.createElement('div');
+    dateRow.className = 'activity-detail-row';
+    dateRow.innerHTML = `
+        <span class="label">Date</span>
+        <span>${formatDaysAgo(activity.date)}</span>
+    `;
+    
     const splitSection = document.createElement('div');
     splitSection.className = 'activity-split-section';
     
@@ -395,6 +402,7 @@ function createActivityDetails(activity) {
     
     details.appendChild(paidByRow);
     details.appendChild(totalRow);
+    details.appendChild(dateRow);
     details.appendChild(splitSection);
     if (activity.type === 'expense') {
         details.appendChild(createAttachmentSection(activity.attachments));
@@ -426,6 +434,32 @@ function formatCurrency(value) {
         return `$${parsed.toFixed(2)}`;
     }
     return `$${value.toFixed(2)}`;
+}
+
+function formatDaysAgo(dateString) {
+    if (!dateString) {
+        return '—';
+    }
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    if (Number.isNaN(date.getTime())) {
+        return '—';
+    }
+    
+    const diffInMs = now - date;
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays < 0) {
+        return '—';
+    } else if (diffInDays === 0) {
+        return 'Today';
+    } else if (diffInDays <= 30) {
+        return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+    } else {
+        return '30+ days ago';
+    }
 }
 
 function formatDate(dateString) {

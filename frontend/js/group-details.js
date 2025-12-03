@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
 let currentGroupId = null;
 let currentGroupName = null;
 let currentGroupActivities = [];
-let currentGroupOffset = 0;
-let hasMoreGroupActivities = false;
 
 async function checkAuthentication() {
     const token = localStorage.getItem('token');
@@ -67,7 +65,7 @@ async function loadGroupDetails() {
     
     // Load balances and activity
     await loadBalances();
-    await loadActivity(true);
+    await loadActivity();
 }
 
 async function loadBalances() {
@@ -197,7 +195,7 @@ function displayBalancesError() {
     }
 }
 
-async function loadActivity(reset = false) {
+async function loadActivity() {
     const token = localStorage.getItem('token');
     const activityList = document.getElementById('activity-list');
     const noActivity = document.getElementById('no-activity');
@@ -208,13 +206,8 @@ async function loadActivity(reset = false) {
         return;
     }
     
-    if (reset) {
-        currentGroupOffset = 0;
-        currentGroupActivities = [];
-    }
-    
     try {
-        const response = await fetch(`http://localhost:5000/api/groups/${currentGroupId}/activity?offset=${currentGroupOffset}&limit=10`, {
+        const response = await fetch(`http://localhost:5000/api/groups/${currentGroupId}/activity`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -229,19 +222,17 @@ async function loadActivity(reset = false) {
         }
         
         const data = await response.json();
-        hasMoreGroupActivities = data.has_more || false;
         
         if (data.activities && data.activities.length > 0) {
-            displayActivity(data.activities, reset);
-        } else if (reset) {
-            // Show empty state only on reset
+            displayActivity(data.activities);
+        } else {
+            // Show empty state
             if (activityList) {
                 activityList.style.display = 'none';
             }
             if (noActivity) {
                 noActivity.style.display = 'block';
             }
-            removeGroupShowMoreButton();
         }
     } catch (error) {
         console.error('Failed to load activity:', error);
@@ -249,34 +240,23 @@ async function loadActivity(reset = false) {
     }
 }
 
-function displayActivity(activities, reset = false) {
+function displayActivity(activities) {
     const activityList = document.getElementById('activity-list');
     const noActivity = document.getElementById('no-activity');
-    const newActivities = Array.isArray(activities) ? activities : [];
+    currentGroupActivities = Array.isArray(activities) ? activities : [];
     
     if (!activityList) return;
     
-    if (reset) {
-        activityList.innerHTML = '';
-        currentGroupActivities = [];
-    }
-    
+    activityList.innerHTML = '';
     activityList.style.display = 'block';
     if (noActivity) {
         noActivity.style.display = 'none';
     }
     
-    newActivities.forEach(activity => {
-        currentGroupActivities.push(activity);
+    activities.forEach(activity => {
         const activityElement = createActivityElement(activity);
         activityList.appendChild(activityElement);
     });
-    
-    // Update offset for next load
-    currentGroupOffset = currentGroupActivities.length;
-    
-    // Update or create "Show More" button
-    updateGroupShowMoreButton();
 }
 
 function getCategoryImagePath(category) {
@@ -558,39 +538,6 @@ function displayActivityError() {
                 <p>Error loading activity. Please try again.</p>
             </div>
         `;
-    }
-    removeGroupShowMoreButton();
-}
-
-function updateGroupShowMoreButton() {
-    removeGroupShowMoreButton();
-    
-    if (!hasMoreGroupActivities) {
-        return;
-    }
-    
-    const activityList = document.getElementById('activity-list');
-    if (!activityList) return;
-    
-    const showMoreBtn = document.createElement('button');
-    showMoreBtn.id = 'show-more-group-activities-btn';
-    showMoreBtn.className = 'btn btn-outline';
-    showMoreBtn.textContent = 'Show More';
-    showMoreBtn.style.marginTop = '20px';
-    showMoreBtn.style.width = '100%';
-    showMoreBtn.addEventListener('click', () => {
-        showMoreBtn.disabled = true;
-        showMoreBtn.textContent = 'Loading...';
-        loadActivity(false);
-    });
-    
-    activityList.appendChild(showMoreBtn);
-}
-
-function removeGroupShowMoreButton() {
-    const existingBtn = document.getElementById('show-more-group-activities-btn');
-    if (existingBtn) {
-        existingBtn.remove();
     }
 }
 
