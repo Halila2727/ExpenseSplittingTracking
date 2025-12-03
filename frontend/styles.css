@@ -383,7 +383,7 @@ model-viewer {
 
 /* Footer */
 footer {
-    background-color: #555555;
+    background-color: var(--dark);
     color: var(--primary);
     padding: 3rem 20px 1rem;
     text-align: center;
