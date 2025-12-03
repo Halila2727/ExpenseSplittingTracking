@@ -59,6 +59,9 @@ async function checkAuthentication() {
         // Load groups data
         loadGroupsData();
         
+        // Load unpaid expenses alerts
+        loadUnpaidExpenses();
+        
     } catch (error) {
         console.error('Authentication check failed:', error);
         // On network error, allow user to stay but show warning
@@ -897,22 +900,39 @@ function validateCustomSplit() {
     let isValid = true;
     let message = '';
     
+    // Calculate remaining amount after fixed amounts
+    const remainingAfterAmounts = expenseAmount - totalAmount;
+    
     if (totalAmount > expenseAmount) {
+        isValid = false;
+        message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
+    } else if (remainingAfterAmounts < 0) {
         isValid = false;
         message = `Total fixed amounts exceed expense amount ($${totalAmount.toFixed(2)} > $${expenseAmount.toFixed(2)})`;
     } else if (totalPercent > 100) {
         isValid = false;
         message = `Total percentage exceeds 100% (${totalPercent.toFixed(2)}%)`;
-    } else if (!hasNone && totalAmount + (expenseAmount * totalPercent / 100) > expenseAmount + 0.01) {
-        isValid = false;
-        const calculatedPercentAmount = expenseAmount * totalPercent / 100;
-        message = `Total ($${totalAmount.toFixed(2)} + $${calculatedPercentAmount.toFixed(2)}) exceeds expense amount`;
-    } else if (hasNone) {
-        message = `Fixed: $${totalAmount.toFixed(2)}, Percent: ${totalPercent.toFixed(2)}%, Remainder will be split`;
-        validationDiv.classList.add('valid');
     } else {
-        message = 'Split configuration looks good ✓';
-        validationDiv.classList.add('valid');
+        // Calculate percentage amounts on the remaining amount (after fixed amounts)
+        const calculatedPercentAmount = remainingAfterAmounts * totalPercent / 100;
+        const totalAfterAmountAndPercent = totalAmount + calculatedPercentAmount;
+        const remainder = expenseAmount - totalAfterAmountAndPercent;
+        
+        if (!hasNone && Math.abs(remainder) > 0.01) {
+            if (totalAfterAmountAndPercent > expenseAmount + 0.01) {
+                isValid = false;
+                message = `Total ($${totalAmount.toFixed(2)} fixed + $${calculatedPercentAmount.toFixed(2)} from ${totalPercent.toFixed(2)}%) exceeds expense amount`;
+            } else {
+                isValid = false;
+                message = `Total ($${totalAmount.toFixed(2)} fixed + $${calculatedPercentAmount.toFixed(2)} from ${totalPercent.toFixed(2)}%) = $${totalAfterAmountAndPercent.toFixed(2)}, remainder: $${remainder.toFixed(2)}. Add "Split remainder" option to allocate remainder.`;
+            }
+        } else if (hasNone) {
+            message = `Fixed: $${totalAmount.toFixed(2)}, Percent: ${totalPercent.toFixed(2)}% of remaining ($${remainingAfterAmounts.toFixed(2)}) = $${calculatedPercentAmount.toFixed(2)}, Remainder: $${remainder.toFixed(2)} will be split`;
+            validationDiv.classList.add('valid');
+        } else {
+            message = 'Split configuration looks good ✓';
+            validationDiv.classList.add('valid');
+        }
     }
     
     if (!isValid) {
@@ -1108,6 +1128,8 @@ async function handleAddExpense() {
             alert('Expense added successfully!');
             // Reload balance data to reflect the new expense
             loadBalanceData();
+            // Reload unpaid expenses
+            loadUnpaidExpenses();
         } else {
             alert(`Error: ${data.error}`);
         }
@@ -1177,12 +1199,196 @@ async function handleSettleExpense() {
             alert('Payment recorded successfully!');
             // Reload balance data to reflect the payment
             loadBalanceData();
+            // Reload unpaid expenses
+            loadUnpaidExpenses();
         } else {
             alert(`Error: ${data.error}`);
         }
     } catch (error) {
         console.error('Failed to record payment:', error);
         alert('Failed to record payment. Please try again.');
+    }
+}
+
+// Unpaid expenses functionality
+async function loadUnpaidExpenses() {
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+        console.error('No authentication token available');
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/unpaid-expenses', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        displayUnpaidExpenses(data);
+        
+    } catch (error) {
+        console.error('Failed to load unpaid expenses:', error);
+        // Hide the container on error
+        const container = document.getElementById('unpaid-expenses-alerts');
+        if (container) {
+            container.style.display = 'none';
+        }
+    }
+}
+
+function displayUnpaidExpenses(data) {
+    const container = document.getElementById('unpaid-expenses-alerts');
+    
+    if (!container) {
+        console.error('Unpaid expenses container not found');
+        return;
+    }
+    
+    if (!data.unpaid_expenses || data.unpaid_expenses.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    // Show container
+    container.style.display = 'block';
+    
+    // Ensure header exists (it should be in HTML, but create if missing)
+    let header = container.querySelector('.unpaid-expenses-header');
+    if (!header) {
+        header = document.createElement('div');
+        header.className = 'unpaid-expenses-header';
+        const title = document.createElement('h2');
+        title.className = 'unpaid-expenses-title';
+        title.textContent = 'Warning! It has been more than 2 days and...';
+        header.appendChild(title);
+        container.insertBefore(header, container.firstChild);
+    }
+    
+    // Find or create the list container
+    let listContainer = container.querySelector('.unpaid-expenses-list');
+    if (!listContainer) {
+        listContainer = document.createElement('div');
+        listContainer.className = 'unpaid-expenses-list';
+        container.appendChild(listContainer);
+    }
+    
+    // Clear existing content in list only (preserve header)
+    listContainer.innerHTML = '';
+    
+    // Create alert items for each lender
+    data.unpaid_expenses.forEach((lenderData) => {
+        const item = createUnpaidExpenseItem(lenderData);
+        listContainer.appendChild(item);
+    });
+}
+
+function createUnpaidExpenseItem(lenderData) {
+    const item = document.createElement('div');
+    item.className = 'unpaid-expense-item';
+    item.setAttribute('tabindex', '0');
+    
+    // Header
+    const header = document.createElement('div');
+    header.className = 'unpaid-expense-header';
+    
+    // Content
+    const content = document.createElement('div');
+    content.className = 'unpaid-expense-content';
+    
+    const description = document.createElement('div');
+    description.className = 'unpaid-expense-description';
+    description.textContent = `You still owe ${lenderData.lender_name}`;
+    
+    content.appendChild(description);
+    
+    // Amount
+    const amount = document.createElement('div');
+    amount.className = 'unpaid-expense-amount';
+    amount.textContent = `$${lenderData.total_amount.toFixed(2)}`;
+    
+    // Toggle button
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'unpaid-expense-toggle';
+    toggleButton.setAttribute('aria-label', 'Toggle expense details');
+    toggleButton.setAttribute('aria-expanded', 'false');
+    toggleButton.innerHTML = `
+        <span class="chevron"></span>
+    `;
+    
+    header.appendChild(content);
+    header.appendChild(amount);
+    header.appendChild(toggleButton);
+    
+    // Details
+    const details = document.createElement('div');
+    details.className = 'unpaid-expense-details';
+    details.setAttribute('aria-hidden', 'true');
+    
+    // Add individual expense details
+    lenderData.expenses.forEach((expense) => {
+        const detailItem = document.createElement('div');
+        detailItem.className = 'unpaid-expense-detail-item';
+        
+        const detailText = document.createElement('div');
+        detailText.className = 'unpaid-expense-detail-text';
+        detailText.textContent = `You owe ${lenderData.lender_name} $${expense.amount.toFixed(2)} for ${expense.description} in ${expense.group_name}`;
+        
+        const detailAmount = document.createElement('div');
+        detailAmount.className = 'unpaid-expense-detail-amount';
+        detailAmount.textContent = `$${expense.amount.toFixed(2)}`;
+        
+        detailItem.appendChild(detailText);
+        detailItem.appendChild(detailAmount);
+        details.appendChild(detailItem);
+    });
+    
+    item.appendChild(header);
+    item.appendChild(details);
+    
+    // Event handlers
+    toggleButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        toggleUnpaidExpenseDetails(item);
+    });
+    
+    item.addEventListener('click', (event) => {
+        if (event.target.closest('.unpaid-expense-details')) {
+            return;
+        }
+        toggleUnpaidExpenseDetails(item);
+    });
+    
+    item.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleUnpaidExpenseDetails(item);
+        }
+    });
+    
+    return item;
+}
+
+function toggleUnpaidExpenseDetails(item) {
+    const isExpanded = item.classList.toggle('expanded');
+    const details = item.querySelector('.unpaid-expense-details');
+    const toggleButton = item.querySelector('.unpaid-expense-toggle');
+    
+    if (details) {
+        details.setAttribute('aria-hidden', String(!isExpanded));
+    }
+    if (toggleButton) {
+        toggleButton.setAttribute('aria-expanded', String(isExpanded));
     }
 }
 

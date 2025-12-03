@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 import sqlite3
 import bcrypt
-from datetime import datetime
+from datetime import datetime, timedelta
 import jwt
 import random
 import string
@@ -755,6 +755,116 @@ def get_balance():
     except Exception as e:
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/unpaid-expenses', methods=['GET'])
+def get_unpaid_expenses():
+    """
+    Get unpaid expenses that are 2+ days old for the authenticated user
+    Returns expenses grouped by lender with aggregated totals and individual expense details
+    """
+    try:
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return jsonify({'error': 'Authorization token required'}), 401
+        
+        token = auth_header.split(' ')[1]
+        
+        # Verify token
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': 'Token expired'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': 'Invalid token'}), 401
+        
+        conn = get_db_connection()
+        
+        # Calculate date 2 days ago
+        two_days_ago = datetime.now() - timedelta(days=2)
+        two_days_ago_str = two_days_ago.isoformat()
+        
+        # Get expense_splits where user owes money, then verify there's still an outstanding balance
+        # This ensures we only show expenses that are actually still unpaid
+        query = """
+            SELECT DISTINCT
+                e.paid_by as lender,
+                u.username as lender_name,
+                e.expense_id,
+                e.description,
+                es.amount as split_amount,
+                e.group_id,
+                g.group_name,
+                e.created_at
+            FROM expense_splits es
+            JOIN expenses e ON es.expense_id = e.expense_id
+            JOIN users u ON e.paid_by = u.id
+            JOIN groups g ON e.group_id = g.group_id
+            LEFT JOIN balances b ON b.group_id = e.group_id 
+                AND b.lender = e.paid_by 
+                AND b.borrower = ?
+                AND b.amount > 0
+            WHERE es.user_id = ?
+                AND es.status = 'owes'
+                AND e.created_at < ?
+                AND b.balance_id IS NOT NULL
+            ORDER BY e.paid_by, e.created_at DESC
+        """
+        
+        rows = conn.execute(query, (user_id, user_id, two_days_ago_str)).fetchall()
+        conn.close()
+        
+        # Group by lender
+        lender_data = defaultdict(lambda: {
+            'lender_id': None,
+            'lender_name': '',
+            'total_amount': 0.0,
+            'expenses': []
+        })
+        
+        for row in rows:
+            lender_id = row['lender']
+            lender_name = row['lender_name']
+            expense_id = row['expense_id']
+            description = row['description']
+            split_amount = float(row['split_amount'])
+            group_id = row['group_id']
+            group_name = row['group_name']
+            created_at = row['created_at']
+            
+            if lender_data[lender_id]['lender_id'] is None:
+                lender_data[lender_id]['lender_id'] = lender_id
+                lender_data[lender_id]['lender_name'] = lender_name
+            
+            lender_data[lender_id]['total_amount'] += split_amount
+            
+            lender_data[lender_id]['expenses'].append({
+                'expense_id': expense_id,
+                'description': description,
+                'amount': round(split_amount, 2),
+                'group_name': group_name,
+                'group_id': group_id,
+                'created_at': created_at
+            })
+        
+        # Convert to list and round totals
+        unpaid_expenses = []
+        for lender_id, data in lender_data.items():
+            unpaid_expenses.append({
+                'lender_id': data['lender_id'],
+                'lender_name': data['lender_name'],
+                'total_amount': round(data['total_amount'], 2),
+                'expenses': data['expenses']
+            })
+        
+        return jsonify({
+            'unpaid_expenses': unpaid_expenses
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in get_unpaid_expenses: {str(e)}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @app.route('/api/activity', methods=['GET'])
 def get_recent_activity():
     """
@@ -806,7 +916,6 @@ def get_recent_activity():
                 AND b.amount > 0
             WHERE e.group_id IN ({placeholders})
             ORDER BY e.created_at DESC
-            LIMIT 20
         """
         
         expenses = conn.execute(expenses_query, [user_id] + group_ids).fetchall()
@@ -821,7 +930,6 @@ def get_recent_activity():
             JOIN groups g ON p.group_id = g.group_id
             WHERE (p.paid_by = ? OR p.paid_to = ?) AND p.group_id IN ({placeholders})
             ORDER BY p.paid_at DESC
-            LIMIT 20
         """
         
         payments = conn.execute(payments_query, [user_id, user_id] + group_ids).fetchall()
@@ -911,9 +1019,6 @@ def get_recent_activity():
         
         # Sort all activities by date (most recent first)
         activities.sort(key=lambda x: x['date'], reverse=True)
-        
-        # Limit to 20 most recent activities
-        activities = activities[:20]
         
         return jsonify({
             'activities': activities,
@@ -1771,7 +1876,6 @@ def get_group_activity(group_id):
             JOIN users u ON e.paid_by = u.id
             WHERE e.group_id = ?
             ORDER BY e.created_at DESC
-            LIMIT 20
         """
         
         expenses = conn.execute(expenses_query, (group_id,)).fetchall()
@@ -1785,7 +1889,6 @@ def get_group_activity(group_id):
             JOIN users u2 ON p.paid_to = u2.id
             WHERE p.group_id = ?
             ORDER BY p.paid_at DESC
-            LIMIT 20
         """
         
         payments = conn.execute(payments_query, (group_id,)).fetchall()
