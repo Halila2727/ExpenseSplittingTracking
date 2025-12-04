@@ -2099,7 +2099,7 @@ background: var(--dark);
 }
 
 .split-validation.valid {
-    color: var(--success);
+    color: var(--success-dark);
 }
 
 /* Dark toggle button styles */
