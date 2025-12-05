@@ -58,6 +58,11 @@ Install the following prerequisites:
 ```bash
 sudo apt install python3 python3-pip nodejs npm -y
 ```
+For PDF/image OCR functionality, install system binaries:
+
+```bash
+sudo apt install poppler-utils -y
+```
 
 ### Quick Start
 
@@ -69,18 +74,6 @@ Navigate to the backend directory and set up the environment:
 cd backend
 pip3 install -r requirements.txt
 ```
-
-**Receipt OCR & Attachments Setup:**
-
-For PDF/image OCR functionality, install system binaries:
-
-```bash
-sudo apt install poppler-utils -y
-```
-
-Note: The Python dependencies (easyocr, pdf2image, Pillow) are included in `requirements.txt` and will be installed automatically. PDF OCR requires the Poppler system binaries above.
-
-Uploaded files are stored under `backend/uploads/expenses/<expense_id>/`. Might switch to cloud storage in the future.
 
 **Initialize the database and start server:**
 
@@ -109,6 +102,8 @@ The backend uses a SQLite database stored as `test.db` in the `backend` director
 
 - The database file persists between sessions and all data is saved automatically.
 - To reset the database, simply delete `test.db` and run `python3 init_db.py` again to create a fresh database with the latest schema.
+
+Currently, uploaded files are stored under `backend/uploads/expenses/<expense_id>/`. Might switch to cloud storage in the future.
 
 ## Team Members:
 	- Halil Akca
