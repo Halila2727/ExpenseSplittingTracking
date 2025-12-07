@@ -232,12 +232,14 @@ model-viewer {
     }
 
     nav .menu {
+        list-style-type: none;
         width: 100vw;
         height: calc(100vh - 60px);
         position: absolute;
         top: 60px;
-        left: 0;
-        background-color: #00ff00;
+        left: auto;
+        right: 0;
+        background-color: gray;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -249,11 +251,17 @@ model-viewer {
         z-index: 9999;
     }
 
-        nav .menu li {
-            width: 100%;
-            margin-bottom: 40px;
-            font-size: 1.2rem;
-        }
+    nav .menu li {
+        width: 100%;
+        margin-bottom: 40px;
+        font-size: 1.2rem;
+    }
+
+    nav .menu a {
+        display: block;
+        text-align: center;
+    }
+
 
     nav input[type="checkbox"]:checked ~ .menu {
         display: flex;
