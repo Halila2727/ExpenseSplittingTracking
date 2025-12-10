@@ -528,11 +528,13 @@ background: var(--dark);
 .action-buttons {
     display: flex;
     gap: .75rem;
+    flex-wrap:wrap;
 }
 
     .action-buttons .btn {
         white-space: nowrap;
         min-width: 140px;
+        padding: 0.6rem;
     }
 
 .btn.btn-secondary {
@@ -551,6 +553,7 @@ background: var(--dark);
     background: transparent;
     color: var(--primary) !important;
     border: 2px solid var(--primary);
+    
 }
 
     .btn.btn-outline:hover {
