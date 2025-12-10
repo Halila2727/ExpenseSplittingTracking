@@ -947,7 +947,7 @@ background: var(--dark);
 
 .receipt-status-text {
     font-size: 0.85rem;
-    color: #777;
+    color: var(--primary);
     min-height: 1rem;
 }
 
