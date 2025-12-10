@@ -232,12 +232,14 @@ model-viewer {
     }
 
     nav .menu {
+        list-style-type: none;
         width: 100vw;
         height: calc(100vh - 60px);
         position: absolute;
         top: 60px;
-        left: 0;
-        background-color: #00ff00;
+        left: auto;
+        right: 0;
+        background-color: gray;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -249,11 +251,17 @@ model-viewer {
         z-index: 9999;
     }
 
-        nav .menu li {
-            width: 100%;
-            margin-bottom: 40px;
-            font-size: 1.2rem;
-        }
+    nav .menu li {
+        width: 100%;
+        margin-bottom: 40px;
+        font-size: 1.2rem;
+    }
+
+    nav .menu a {
+        display: block;
+        text-align: center;
+    }
+
 
     nav input[type="checkbox"]:checked ~ .menu {
         display: flex;
@@ -383,7 +391,7 @@ model-viewer {
 
 /* Footer */
 footer {
-    background-color: #555555;
+    background-color: var(--dark);
     color: var(--primary);
     padding: 3rem 20px 1rem;
     text-align: center;
@@ -826,13 +834,127 @@ background: var(--dark);
     font-style: italic;
 }
 
-.activity-attachment-placeholder {
-    border: 1px dashed rgba(0, 0, 0, 0.2);
+.activity-attachments {
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 10px;
-    padding: 0.75rem;
-    text-align: center;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    margin-top: 1rem;
+}
+
+.activity-attachment-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.activity-attachments-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+}
+
+.activity-attachment-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--dark);
+    text-decoration: none;
+    background: #fff;
+    transition: border 0.2s ease, transform 0.2s ease;
+}
+
+.activity-attachment-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.activity-attachment-item img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.activity-attachment-preview {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #555;
+    overflow: hidden;
+}
+
+.activity-attachment-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.activity-attachment-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.activity-attachment-meta span {
+    font-size: 0.8rem;
+    color: #777;
+}
+
+.activity-attachment-meta .attachment-name {
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.activity-attachment-meta .attachment-ocr {
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.activity-attachment-empty {
     font-size: 0.85rem;
     color: #777;
+    font-style: italic;
+}
+
+.receipt-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+}
+
+.receipt-options .checkbox-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--dark);
+}
+
+.receipt-status-text {
+    font-size: 0.85rem;
+    color: #777;
+    min-height: 1rem;
+}
+
+.receipt-status-text.success {
+    color: #2e7d32;
+}
+
+.receipt-status-text.error {
+    color: #c62828;
 }
 
 .activity-memo-box {
@@ -1986,7 +2108,7 @@ background: var(--dark);
 }
 
 .split-validation.valid {
-    color: var(--success);
+    color: var(--success-dark);
 }
 
 /* Dark toggle button styles */
@@ -2223,4 +2345,188 @@ body.dark-mode .profile-form-section label{
 }
 body.dark-mode .stat-value {
     color: #ffffff;
+}
+
+/* Unpaid Expenses Alerts */
+.unpaid-expenses-section {
+    padding: 2rem 0 4rem;
+    background: var(--dark);
+}
+
+.unpaid-expenses-container {
+    width: 100%;
+}
+
+.unpaid-expenses-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.unpaid-expenses-title {
+    font-size: 2rem;
+    color: var(--error-dark);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-align: center;
+}
+
+.unpaid-expenses-list {
+    width: 100%;
+}
+
+.unpaid-expense-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.25rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    background: var(--light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.unpaid-expense-item:hover {
+    background: #f8f9fa;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.unpaid-expense-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.unpaid-expense-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.unpaid-expense-description {
+    font-weight: 500;
+    color: var(--error-dark);
+    margin-bottom: 0.25rem;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+}
+
+.unpaid-expense-amount {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--error-dark);
+    margin-left: auto;
+    flex-shrink: 0;
+    text-align: right;
+    line-height: 1.2;
+}
+
+.unpaid-expense-toggle {
+    border: none;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 999px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    margin-left: 1rem;
+}
+
+.unpaid-expense-toggle:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.unpaid-expense-toggle .chevron {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #555;
+    transition: transform 0.2s ease;
+}
+
+.unpaid-expense-item.expanded .unpaid-expense-toggle .chevron {
+    transform: rotate(180deg);
+}
+
+.unpaid-expense-details {
+    width: 100%;
+    display: none;
+    border-top: 1px solid #ececec;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    gap: 0.75rem;
+    flex-direction: column;
+}
+
+.unpaid-expense-item.expanded .unpaid-expense-details {
+    display: flex;
+}
+
+.unpaid-expense-detail-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--error-dark);
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.unpaid-expense-detail-item:last-child {
+    border-bottom: none;
+}
+
+.unpaid-expense-detail-text {
+    flex: 1;
+    word-wrap: break-word;
+}
+
+.unpaid-expense-detail-amount {
+    font-weight: 600;
+    color: var(--error-dark);
+    flex-shrink: 0;
+}
+
+/* Dark mode styles for unpaid expenses */
+body.dark-mode .unpaid-expenses-section {
+    background-color: #121212;
+}
+
+body.dark-mode .unpaid-expenses-title {
+    color: #e43434;
+}
+
+body.dark-mode .unpaid-expense-item {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+}
+
+body.dark-mode .unpaid-expense-item:hover {
+    background: #333333;
+}
+
+body.dark-mode .unpaid-expense-description,
+body.dark-mode .unpaid-expense-amount,
+body.dark-mode .unpaid-expense-detail-text,
+body.dark-mode .unpaid-expense-detail-amount {
+    color: #e43434;
+}
+
+body.dark-mode .unpaid-expense-details {
+    border-top-color: #3a3a3a;
+}
+
+body.dark-mode .unpaid-expense-detail-item {
+    border-bottom-color: #3a3a3a;
 }

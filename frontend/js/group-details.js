@@ -411,6 +411,20 @@ function createGroupActivityDetails(activity) {
         <span>${activity.group_name || currentGroupName || 'Group'}</span>
     `;
     
+    const totalRow = document.createElement('div');
+    totalRow.className = 'activity-detail-row';
+    totalRow.innerHTML = `
+        <span class="label">Total</span>
+        <span>${formatCurrency(activity.amount)}</span>
+    `;
+    
+    const dateRow = document.createElement('div');
+    dateRow.className = 'activity-detail-row';
+    dateRow.innerHTML = `
+        <span class="label">Date</span>
+        <span>${formatDaysAgo(activity.date)}</span>
+    `;
+    
     const splitSection = document.createElement('div');
     splitSection.className = 'activity-split-section';
     
@@ -445,10 +459,6 @@ function createGroupActivityDetails(activity) {
         });
     }
     
-    const attachmentPlaceholder = document.createElement('div');
-    attachmentPlaceholder.className = 'activity-attachment-placeholder';
-    attachmentPlaceholder.textContent = 'Attachment feature coming soon.';
-    
     const memoBox = document.createElement('div');
     memoBox.className = 'activity-memo-box';
     const memoText = (activity.memo && activity.memo.trim()) || null;
@@ -459,8 +469,12 @@ function createGroupActivityDetails(activity) {
     
     details.appendChild(paidByRow);
     details.appendChild(groupRow);
+    details.appendChild(totalRow);
+    details.appendChild(dateRow);
     details.appendChild(splitSection);
-    details.appendChild(attachmentPlaceholder);
+    if (activity.type === 'expense') {
+        details.appendChild(createAttachmentSection(activity.attachments));
+    }
     details.appendChild(memoBox);
     
     return details;
@@ -490,6 +504,32 @@ function formatCurrency(value) {
     return `$${value.toFixed(2)}`;
 }
 
+function formatDaysAgo(dateString) {
+    if (!dateString) {
+        return '—';
+    }
+    
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    if (Number.isNaN(date.getTime())) {
+        return '—';
+    }
+    
+    const diffInMs = now - date;
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays < 0) {
+        return '—';
+    } else if (diffInDays === 0) {
+        return 'Today';
+    } else if (diffInDays <= 30) {
+        return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+    } else {
+        return '30+ days ago';
+    }
+}
+
 function displayActivityError() {
     const activityList = document.getElementById('activity-list');
     if (activityList) {
@@ -499,6 +539,74 @@ function displayActivityError() {
             </div>
         `;
     }
+}
+
+function createAttachmentSection(attachments) {
+    const section = document.createElement('div');
+    section.className = 'activity-attachments';
+    
+    const title = document.createElement('div');
+    title.className = 'activity-attachments-title';
+    title.textContent = 'Attachments';
+    section.appendChild(title);
+    
+    if (!attachments || !attachments.length) {
+        const empty = document.createElement('div');
+        empty.className = 'activity-attachment-empty';
+        empty.textContent = 'No attachments provided.';
+        section.appendChild(empty);
+        return section;
+    }
+    
+    const list = document.createElement('div');
+    list.className = 'activity-attachment-list';
+    attachments.forEach(attachment => {
+        list.appendChild(createAttachmentItem(attachment));
+    });
+    section.appendChild(list);
+    return section;
+}
+
+function createAttachmentItem(attachment) {
+    const link = document.createElement('a');
+    link.className = 'activity-attachment-item';
+    link.href = attachment.url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    
+    const preview = document.createElement('div');
+    preview.className = 'activity-attachment-preview';
+    if (attachment.mime_type && attachment.mime_type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = attachment.url;
+        img.alt = attachment.file_name || 'Attachment preview';
+        preview.appendChild(img);
+    } else {
+        preview.textContent = attachment.mime_type === 'application/pdf' ? '📄' : '📎';
+    }
+    
+    const meta = document.createElement('div');
+    meta.className = 'activity-attachment-meta';
+    
+    const nameEl = document.createElement('span');
+    nameEl.className = 'attachment-name';
+    nameEl.textContent = attachment.file_name || 'Attachment';
+    
+    const typeEl = document.createElement('span');
+    typeEl.textContent = attachment.is_receipt ? 'Receipt' : 'Image';
+    meta.appendChild(nameEl);
+    meta.appendChild(typeEl);
+    
+    if (attachment.is_receipt && typeof attachment.ocr_total === 'number') {
+        const ocrEl = document.createElement('span');
+        ocrEl.className = 'attachment-ocr';
+        ocrEl.textContent = `Detected: $${attachment.ocr_total.toFixed(2)}`;
+        meta.appendChild(ocrEl);
+    }
+    
+    link.appendChild(preview);
+    link.appendChild(meta);
+    return link;
 }
 
 function goBack() {

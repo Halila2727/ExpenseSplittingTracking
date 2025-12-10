@@ -85,3 +85,15 @@ CREATE TABLE IF NOT EXISTS payments (
     FOREIGN KEY (paid_to) REFERENCES users(id),
     FOREIGN KEY (group_id) REFERENCES groups(group_id)
 );
+
+CREATE TABLE IF NOT EXISTS expense_attachments (
+    attachment_id INTEGER PRIMARY KEY NOT NULL,
+    expense_id INTEGER NOT NULL,
+    file_path TEXT NOT NULL,
+    original_filename TEXT,
+    mime_type TEXT,
+    is_receipt INTEGER DEFAULT 0,
+    ocr_total NUMERIC,
+    created_at TEXT,
+    FOREIGN KEY (expense_id) REFERENCES expenses(expense_id) ON DELETE CASCADE
+);
