@@ -974,6 +974,12 @@ background: var(--dark);
     font-size: 0.9rem;
     color: var(--dark);
 }
+    .receipt-options .checkbox-inline input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
 
 .receipt-status-text {
     font-size: 0.85rem;
