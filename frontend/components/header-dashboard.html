@@ -1,8 +1,17 @@
+<!DOCTYPE html>
 <html>
+<head>
+  <script type="module"
+    src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
 <header>
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
   <div class="container">
-    <nav>
+    <nav class="main-nav">
+
       <div class="logo">
         <model-viewer
           src="images/Untitled.glb"
@@ -15,13 +24,39 @@
         </model-viewer>
         <span class="logo-text">Centsible</span>
       </div>
+
+      <input type="checkbox" id="toggle-navbar" />
+      <label for="toggle-navbar" class="toggle-navbar">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </label>
+
       <ul class="nav-links">
         <li><a href="index.html">Landing Page</a></li>
         <li><a href="login.html" id="sign-out-link" class="btn">Sign Out</a></li>
-        <li> <button class="dark-toggle"> <span class="moon-icon">☾</span> <span class="sun-icon" style="display:none;">☼</span> </button> </li>
+        <li>
+          <button class="dark-toggle">
+            <span class="moon-icon">☾</span>
+            <span class="sun-icon" style="display:none;">☼</span>
+          </button>
+        </li>
       </ul>
+
+      <ul class="menu">
+        <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
+        <li class="nav-item"><a class="nav-link" href="about.html">About Us</a></li>
+        <li class="nav-item"><a class="nav-link" href="login.html">Get Started</a></li>
+        <li> <button class="dark-toggle"> <span class="moon-icon">☾</span> <span class="sun-icon" style="display:none;">☼</span> </button> </li>
+
+      </ul>
+
     </nav>
   </div>
 </header>
+
 <script src="theme-toggle.js" defer></script>
+</body>
 </html>
