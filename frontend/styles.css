@@ -520,6 +520,7 @@ background: var(--dark);
 .action-buttons {
     display: flex;
     gap: .75rem;
+    flex-wrap:wrap;
 }
 
     .action-buttons .btn {
