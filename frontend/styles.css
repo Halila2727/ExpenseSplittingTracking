@@ -254,15 +254,15 @@ model-viewer {
     nav .menu {
         list-style-type: none;
         width: 100vw;
-        height: calc(100vh - 60px);
+        /*height: calc(100vh - 60px);*/
         position: absolute;
         top: 60px;
         left: auto;
         right: 0;
-        background-color: gray;
+        background-color: #e0e0e0;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        /*justify-content: space-between;*/
         padding: 20px;
         width: 200px;
         display: none;
