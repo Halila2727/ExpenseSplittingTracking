@@ -559,11 +559,13 @@ background: var(--dark);
 .action-buttons {
     display: flex;
     gap: .75rem;
+    flex-wrap:wrap;
 }
 
     .action-buttons .btn {
         white-space: nowrap;
         min-width: 140px;
+        padding: 0.6rem;
     }
 
 .btn.btn-secondary {
@@ -582,6 +584,7 @@ background: var(--dark);
     background: transparent;
     color: var(--primary) !important;
     border: 2px solid var(--primary);
+    
 }
 
     .btn.btn-outline:hover {
@@ -975,7 +978,7 @@ background: var(--dark);
 
 .receipt-status-text {
     font-size: 0.85rem;
-    color: #777;
+    color: #565656;
     min-height: 1rem;
 }
 
@@ -2308,8 +2311,6 @@ body.dark-mode .modal-header{
     background-color: #2a2a2a;
 }
 /* Changing text color back to default */
-body.dark-mode #addCurrencyType, /* Currency Prefix */
-body.dark-mode #settleCurrencyType,
 body.dark-mode .split-details, /* Split method dropdown */
 body.dark-mode .split-details h4{
     color: #000000;
