@@ -4,6 +4,7 @@ body, html {
 }
 
 * {
+    outline: 1px solid red !important;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -49,7 +50,27 @@ body {
     align-items: center;
     text-decoration: none;
     color: var(--primary);
+    width: auto;                /* <--- important */
+    max-width: max-content;     /* <--- important */
+    flex-shrink: 0;             /* prevent resizing weirdness */
 }
+
+
+
+.logo model-viewer {
+    width: 50px !important;
+    height: 50px !important;
+    pointer-events: none;
+}
+
+nav.main-nav,
+.container nav,
+header nav {
+    display: flex;
+    justify-content: space-between;  /* PUSHES hamburger to the right */
+    align-items: center;
+}
+
 
     .logo:visited,
     .logo:hover,
@@ -261,6 +282,16 @@ model-viewer {
         display: block;
         text-align: center;
     }
+
+    .clickable-centsible-logo {
+        text-decoration: none;
+    }
+
+    .clickable-centsible-logo:visited {
+        color: black;
+    }
+
+    
 
 
     nav input[type="checkbox"]:checked ~ .menu {
@@ -2529,3 +2560,4 @@ body.dark-mode .unpaid-expense-details {
 body.dark-mode .unpaid-expense-detail-item {
     border-bottom-color: #3a3a3a;
 }
+
