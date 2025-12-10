@@ -947,7 +947,7 @@ background: var(--dark);
 
 .receipt-status-text {
     font-size: 0.85rem;
-    color: #777;
+    color: var(--primary);
     min-height: 1rem;
 }
 
@@ -2280,8 +2280,6 @@ body.dark-mode .modal-header{
     background-color: #2a2a2a;
 }
 /* Changing text color back to default */
-body.dark-mode #addCurrencyType, /* Currency Prefix */
-body.dark-mode #settleCurrencyType,
 body.dark-mode .split-details, /* Split method dropdown */
 body.dark-mode .split-details h4{
     color: #000000;

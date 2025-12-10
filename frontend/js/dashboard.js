@@ -999,7 +999,6 @@ async function handleAddExpense() {
     const note = document.getElementById('expenseNote').value.trim();
     const date = document.getElementById('expenseDate').value;
     const category = document.getElementById('expenseCategory').value;
-    const currency = document.getElementById('expenseCurrency').value;
     const attachmentInput = document.getElementById('expenseReceipt');
     const receiptCheckbox = document.getElementById('expenseReceiptIsReceipt');
     
@@ -1087,8 +1086,7 @@ async function handleAddExpense() {
         split_config: splitConfig,  // Add this for custom splits
         note: note,
         date: date,
-        category: category,
-        currency: currency
+        category: category
     };
     
     try {
@@ -1149,7 +1147,6 @@ async function handleSettleExpense() {
     
     // Collect form data
     const amount = parseFloat(document.getElementById('settleAmount').value);
-    const currency = document.getElementById('settleCurrency').value;
     const description = document.getElementById('settleDescription').value.trim();
     const groupId = parseInt(document.getElementById('settleGroup').value);
     const paidBy = parseInt(document.getElementById('settlePayer').value);
@@ -1175,7 +1172,6 @@ async function handleSettleExpense() {
     
     const settleData = {
         amount: amount,
-        currency: currency,
         description: description,
         group_id: groupId,
         paid_by: paidBy,
