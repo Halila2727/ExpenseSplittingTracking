@@ -59,7 +59,7 @@ body {
 .logo model-viewer {
     width: 50px !important;
     height: 50px !important;
-    pointer-events: none;
+    pointer-events: auto;
 }
 
 nav.main-nav,

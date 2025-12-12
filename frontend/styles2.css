@@ -2,13 +2,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    text-transform: uppercase;
 }
 
 html,
 body {
     width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
 }
 
 img {
@@ -21,6 +20,8 @@ canvas {
     position: fixed;
     top: 0;
     left: 0;
+    pointer-events: none;
+    z-index: 1;
 }
 
 h1 {
@@ -39,13 +40,32 @@ h1 {
 section {
     position: relative;
     width: 100vw;
+    z-index: 2;
+}
+
+.hero1 {
     height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 1em;
-    z-index: 2;
+}
+
+.scroll-prompt {
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem 0;
+}
+
+.scroll-prompt-text {
+    font-size: 1.5rem;
+    color: var(--primary, #ffffff);
+    text-align: center;
+    opacity: 0.7;
 }
 
 .hero1 h1 {
@@ -82,4 +102,35 @@ scan-container {
 
 .lenis.lenis-smooth iframe {
     pointer-events: none;
+}
+
+/* Override section styles for dashboard to prevent fixed height */
+.dashboard {
+    height: auto !important;
+    min-height: auto !important;
+}
+
+.unpaid-expenses-section {
+    height: auto !important;
+    min-height: auto !important;
+}
+
+/* Button styles for hero1 section */
+.hero1 .btn {
+    position: relative;
+    z-index: 10;
+    visibility: visible;
+    opacity: 1;
+    background-color: var(--primary, #000000);
+    color: var(--light, #ffffff);
+    border: 2px solid var(--primary, #000000);
+    transition: all 0.3s ease;
+}
+
+.hero1 .btn:hover {
+    background-color: #ffffff;
+    color: #FF6B35;
+    border: 2px solid #FF6B35;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }

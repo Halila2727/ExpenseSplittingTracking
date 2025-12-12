@@ -88,11 +88,24 @@ const rotationSpeed = 0.3;
 let isFloating = true;
 let currentScroll = 0;
 
-const stickyHeight = window.innerHeight;
-const scannerSection = document.querySelector(".scanner");
-const scannerPosition = scannerSection.offsetTop;
-const scanContainer = document.querySelector(".scan-container");
-gsap.set(scanContainer, { scale: 0 });
+// Calculate scroll position based on hero section instead of scanner
+let heroSection = null;
+let heroPosition = window.innerHeight;
+
+// Initialize hero section after DOM loads
+function initHeroSection() {
+    heroSection = document.querySelector(".hero1");
+    if (heroSection) {
+        heroPosition = heroSection.offsetTop + heroSection.offsetHeight;
+    }
+}
+
+// Initialize on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroSection);
+} else {
+    initHeroSection();
+}
 
 function playInitialAnimation() {
     if (model) {
@@ -104,11 +117,6 @@ function playInitialAnimation() {
             ease: "power2.out",
         });
     }
-    gsap.to(scanContainer, {
-        scale: 1,
-        duration: 1,
-        ease: "power2.out",
-    });
 }
 
 ScrollTrigger.create({
@@ -126,57 +134,6 @@ ScrollTrigger.create({
             });
             isFloating = true;
         }
-        gsap.to(scanContainer, {
-            scale: 1,
-            duration: 1,
-            ease: "power2.out"
-        });
-    },
-});
-
-ScrollTrigger.create({
-    trigger: ".scanner",
-    start: "top top",
-    end: '${stickyHeight}px',
-    pin: true,
-    onEnter: () => {
-        if (model) {
-            isFloating = false;
-            model.position.y = 0;
-
-            setTimeout(() => {
-            }, 500);
-
-            gsap.to(model.rotation, {
-                y: model.rotation.y + Math.PI * 2,
-                duration: 1,
-                ease: "power2.inOut",
-                onComplete: () => {
-                    gsap.to(model.scale, {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                        duration: 0.5,
-                        ease: "power2.in",
-                        onComplete: () => {
-                            gsap.to(scanContainer, {
-                                scale: 0,
-                                duration: 0.5,
-                                ease: "power2.in",
-                            });
-                        },
-                    });
-                },
-            });
-        }
-    },
-    onLeaveBack: () => {
-        gsap.set(scanContainer, { scale: 0 });
-        gsap.to(scanContainer, {
-            scale: 1,
-            duration: 1,
-            ease: "power2.out",
-        });
     },
 });
 
@@ -190,7 +147,11 @@ function animate() {
             const floatOffset = Math.sin(Date.now() * 0.001 * floatSpeed) * floatAmplitude;
             model.position.y = floatOffset;
         }
-        const scrollProgress = Math.min(currentScroll / scannerPosition, 1);
+        // Update hero position for scroll calculations
+        if (heroSection) {
+            heroPosition = heroSection.offsetTop + heroSection.offsetHeight;
+        }
+        const scrollProgress = Math.min(currentScroll / heroPosition, 1);
 
         if(scrollProgress < 1) {
             model.rotation.x = scrollProgress * Math.PI * 2;

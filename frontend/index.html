@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Centsible - Expense Tracking & Splitting</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles2.css">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
 </head>
 <body>
+    <div class="model"></div>
+    
     <div id="header-container"></div>
 
-    <section class="hero">
-        <div class="container">
-            <img src="images/CentsibleLogoAlternate.png" alt="Centsible Logo" class="hero-logo">
-            <p>Expense Tracking & Splitting</p>
-            <a href="login.html" class="btn">Start Tracking Now</a>
-        </div>
+    <section class="hero1">
+        <h1>Centsible</h1>
+        <p>Expense Tracking & Splitting</p>
+        <a href="login.html" class="btn">Start Tracking Now</a>
     </section>
 
     <section class="features" id="features">
@@ -109,10 +109,17 @@
             </div>
         </div>
     </footer>
-    <script src="js/components.js"></script>
 
+    <!-- Animation Scripts -->
+    <script src="https://unpkg.com/lenis@1.1.16/dist/lenis.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="animated script.js"></script>
+
+    <script src="js/components.js"></script>
     <script src="animations.js"></script>
     <script src="theme-toggle.js"></script>
 
