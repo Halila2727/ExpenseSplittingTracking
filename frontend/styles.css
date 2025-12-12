@@ -267,19 +267,59 @@ model-viewer {
         width: 200px;
         display: none;
         padding: 10px 0;
-        border-radius: 5px;
+        border-radius: 15px;
+        border: 2px solid #000000;
         z-index: 9999;
     }
 
     nav .menu li {
         width: 100%;
-        margin-bottom: 40px;
+        margin-bottom: 0;
+        padding: 15px 0;
         font-size: 1.2rem;
+        text-align: center;
+        border-bottom: 1px solid #000000;
+        transition: background-color 0.2s ease;
+    }
+
+    nav .menu li:last-child {
+        border-bottom: none;
+    }
+
+    nav .menu li:hover {
+        background-color: rgba(0, 0, 0, 0.1);
     }
 
     nav .menu a {
         display: block;
         text-align: center;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    nav .menu a:visited {
+        color: inherit;
+    }
+
+    nav .menu a:active {
+        color: inherit;
+    }
+
+    nav .menu button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: inherit;
+        font-size: inherit;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    nav .menu button:hover {
+        opacity: 0.7;
     }
 
     .clickable-centsible-logo {
@@ -1078,6 +1118,44 @@ background: var(--dark);
 
     .step {
         margin-bottom: 2rem;
+    }
+
+    .balance-title {
+        font-size: 1.2rem;
+    }
+
+    .balance-amount {
+        font-size: 1.8rem;
+    }
+
+    .subnav {
+        gap: 0.5rem;
+        padding: .5rem .75rem;
+        flex-wrap: wrap;
+    }
+
+    .subnav-link {
+        padding: .3rem .6rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .about-section {
+        width: 90%;
+        margin-top: 5%;
+        padding: 1.5rem 1rem;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .about-paragraph-header {
+        font-size: 1.5rem;
+    }
+
+    .about-text {
+        width: 90%;
+        font-size: 0.95rem;
+        line-height: 1.6;
     }
 }
 
@@ -1993,13 +2071,81 @@ background: var(--dark);
 
 /* Responsive Group Details */
 @media (max-width: 768px) {
+    .group-details {
+        padding-top: 4rem;
+        padding-bottom: 1rem;
+    }
+
+    .group-details-header {
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .group-details-header h1 {
+        font-size: 1.5rem;
+    }
+
     .group-details-content {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        min-height: auto;
     }
 
     .details-panel {
-        padding: 1.5rem;
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .details-panel h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .member-balance-item {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .member-balance-content {
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .member-name {
+        min-width: auto;
+        font-size: 1.1rem;
+        flex: 1 1 100%;
+    }
+
+    .member-balance-divider {
+        display: none;
+    }
+
+    .member-balance-values {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .balance-value-section {
+        justify-content: flex-start;
+    }
+
+    .activity-list {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .activity-export {
+        margin-top: 1rem;
+    }
+
+    .activity-export .btn {
+        width: 100%;
     }
 }
 
