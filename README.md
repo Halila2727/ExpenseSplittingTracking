@@ -24,6 +24,8 @@ Centsible eliminates the awkwardness of asking friends to pay you back by provid
 - **CSS3** - Styling and responsive design
 - **JavaScript** - Client-side logic and interactivity
 - **GSAP (GreenSock Animation Platform)** - Animations and scroll effects
+- **Lenis** - Smooth scrolling library for enhanced scroll animations
+- **Three.js** - 3D graphics library for interactive 3D model rendering
 - **Google Model Viewer** - 3D logo rendering
 - **jsPDF** - PDF report generation
 
