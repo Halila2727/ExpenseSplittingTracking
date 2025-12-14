@@ -226,7 +226,6 @@ async function handleCreateGroup() {
         
         if (response.ok) {
             closeModal('createGroupModal');
-            alert(`Group "${data.group_name}" created successfully! Join code: ${data.join_code}`);
             // Reload groups data
             loadGroupsData();
         } else {

@@ -1123,7 +1123,6 @@ async function handleAddExpense() {
         if (response.ok) {
             closeModal('addExpenseModal');
              resetReceiptAttachmentState(true);
-            alert('Expense added successfully!');
             // Reload balance data to reflect the new expense
             loadBalanceData();
             // Reload unpaid expenses
