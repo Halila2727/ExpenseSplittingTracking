@@ -806,9 +806,9 @@ def get_unpaid_expenses():
                 AND b.amount > 0
             WHERE es.user_id = ?
                 AND es.status = 'owes'
-                AND e.created_at < ?
+                AND COALESCE(e.date, e.created_at) < ?
                 AND b.balance_id IS NOT NULL
-            ORDER BY e.paid_by, e.created_at DESC
+            ORDER BY e.paid_by, COALESCE(e.date, e.created_at) DESC
         """
         
         rows = conn.execute(query, (user_id, user_id, two_days_ago_str)).fetchall()
