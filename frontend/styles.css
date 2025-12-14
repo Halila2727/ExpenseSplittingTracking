@@ -49,7 +49,27 @@ body {
     align-items: center;
     text-decoration: none;
     color: var(--primary);
+    width: auto;                /* <--- important */
+    max-width: max-content;     /* <--- important */
+    flex-shrink: 0;             /* prevent resizing weirdness */
 }
+
+
+
+.logo model-viewer {
+    width: 50px !important;
+    height: 50px !important;
+    pointer-events: auto;
+}
+
+nav.main-nav,
+.container nav,
+header nav {
+    display: flex;
+    justify-content: space-between;  /* PUSHES hamburger to the right */
+    align-items: center;
+}
+
 
     .logo:visited,
     .logo:hover,
@@ -234,33 +254,81 @@ model-viewer {
     nav .menu {
         list-style-type: none;
         width: 100vw;
-        height: calc(100vh - 60px);
+        /*height: calc(100vh - 60px);*/
         position: absolute;
         top: 60px;
         left: auto;
         right: 0;
-        background-color: gray;
-        display: flex;
+        background-color: #e0e0e0;
         flex-direction: column;
-        justify-content: space-between;
-        padding: 20px;
+        /*justify-content: space-between;*/
         width: 200px;
         display: none;
         padding: 10px 0;
-        border-radius: 5px;
+        border-radius: 15px;
+        border: 2px solid #000000;
         z-index: 9999;
     }
 
     nav .menu li {
         width: 100%;
-        margin-bottom: 40px;
+        margin-bottom: 0;
+        padding: 15px 0;
         font-size: 1.2rem;
+        text-align: center;
+        border-bottom: 1px solid #000000;
+        transition: background-color 0.2s ease;
+    }
+
+    nav .menu li:last-child {
+        border-bottom: none;
+    }
+
+    nav .menu li:hover {
+        background-color: rgba(0, 0, 0, 0.1);
     }
 
     nav .menu a {
         display: block;
         text-align: center;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
     }
+
+    nav .menu a:visited {
+        color: inherit;
+    }
+
+    nav .menu a:active {
+        color: inherit;
+    }
+
+    nav .menu button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: inherit;
+        font-size: inherit;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+        text-align: center;
+    }
+
+    nav .menu button:hover {
+        opacity: 0.7;
+    }
+
+    .clickable-centsible-logo {
+        text-decoration: none;
+    }
+
+    .clickable-centsible-logo:visited {
+        color: black;
+    }
+
+    
 
 
     nav input[type="checkbox"]:checked ~ .menu {
@@ -426,30 +494,6 @@ footer {
         color: var(--secondary);
     }
 
-
-/* About-Us Styles */
-.about-section {
-    margin: auto;
-    width: 30%;
-    margin-top: 10%;
-    background-color: #e2e2e2;
-    border-radius: 20px;
-    padding-top: 15px;
-    padding-bottom: 15px;
-}
-
-.about-paragraph-header {
-    font-weight: bold;
-    text-decoration-line: underline;
-    font-size: 20px;
-    text-align: center;
-}
-
-.about-text {
-    margin: auto;
-    margin-top: 20px;
-    width: 80%;
-}
 
 /* Dashboard Styles */
 .dashboard {
@@ -941,6 +985,12 @@ background: var(--dark);
     font-size: 0.9rem;
     color: var(--dark);
 }
+    .receipt-options .checkbox-inline input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
 
     .receipt-options .checkbox-inline input[type="checkbox"] {
         width: 16px;
@@ -1047,6 +1097,27 @@ background: var(--dark);
     .step {
         margin-bottom: 2rem;
     }
+
+    .balance-title {
+        font-size: 1.2rem;
+    }
+
+    .balance-amount {
+        font-size: 1.8rem;
+    }
+
+    .subnav {
+        gap: 0.5rem;
+        padding: .5rem .75rem;
+        flex-wrap: wrap;
+    }
+
+    .subnav-link {
+        padding: .3rem .6rem;
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
 }
 
 /* Login Form */
@@ -1961,13 +2032,81 @@ background: var(--dark);
 
 /* Responsive Group Details */
 @media (max-width: 768px) {
+    .group-details {
+        padding-top: 4rem;
+        padding-bottom: 1rem;
+    }
+
+    .group-details-header {
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .group-details-header h1 {
+        font-size: 1.5rem;
+    }
+
     .group-details-content {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+        min-height: auto;
     }
 
     .details-panel {
-        padding: 1.5rem;
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .details-panel h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .member-balance-item {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .member-balance-content {
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .member-name {
+        min-width: auto;
+        font-size: 1.1rem;
+        flex: 1 1 100%;
+    }
+
+    .member-balance-divider {
+        display: none;
+    }
+
+    .member-balance-values {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    .balance-value-section {
+        justify-content: flex-start;
+    }
+
+    .activity-list {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .activity-export {
+        margin-top: 1rem;
+    }
+
+    .activity-export .btn {
+        width: 100%;
     }
 }
 
@@ -2245,10 +2384,6 @@ body.dark-mode .login-form label{
     color:#ffffff;
 }
 
-/* About Us */
-body.dark-mode .about-section {
-    background-color:#2a2a2a;
-}
 /* Dashboard container */
 body.dark-mode .dashboard,
 body.dark-mode .balance-title{
@@ -2536,3 +2671,4 @@ body.dark-mode .unpaid-expense-details {
 body.dark-mode .unpaid-expense-detail-item {
     border-bottom-color: #3a3a3a;
 }
+

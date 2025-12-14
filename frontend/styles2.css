@@ -1,0 +1,136 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    width: 100vw;
+    min-height: 100vh;
+}
+
+img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+h1 {
+    text-align: center;
+    font-size: 10vw;
+    font-weight: 300;
+    line-height: 100%;
+}
+
+.model {
+    position: fixed;
+    width: 100%;
+    height: 100vh;
+}
+
+section {
+    position: relative;
+    width: 100vw;
+    z-index: 2;
+}
+
+.hero1 {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1em;
+}
+
+.scroll-prompt {
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 4rem 0;
+}
+
+.scroll-prompt-text {
+    font-size: 1.5rem;
+    color: var(--primary, #ffffff);
+    text-align: center;
+    opacity: 0.7;
+}
+
+.hero1 h1 {
+    margin-bottom: 0.25em;
+}
+
+.scan-info {
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    display: flex;
+    justify-content: space-between;
+    padding: 2em;
+}
+
+scan-container {
+    width: 280px;
+    height: 480px;
+    border: 1px solid #000;
+    border-radius: 0.5em;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: clip;
+}
+
+.lenis.lenis-smooth iframe {
+    pointer-events: none;
+}
+
+/* Override section styles for dashboard to prevent fixed height */
+.dashboard {
+    height: auto !important;
+    min-height: auto !important;
+}
+
+.unpaid-expenses-section {
+    height: auto !important;
+    min-height: auto !important;
+}
+
+/* Button styles for hero1 section */
+.hero1 .btn {
+    position: relative;
+    z-index: 10;
+    visibility: visible;
+    opacity: 1;
+    background-color: var(--primary, #000000);
+    color: var(--light, #ffffff);
+    border: 2px solid var(--primary, #000000);
+    transition: all 0.3s ease;
+}
+
+.hero1 .btn:hover {
+    background-color: #ffffff;
+    color: #FF6B35;
+    border: 2px solid #FF6B35;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
