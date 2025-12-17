@@ -6,6 +6,7 @@
     <title>Centsible - Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+
 </head>
 
 <body>
@@ -73,7 +74,7 @@
             <form id="addExpenseForm" class="modal-form">
                 <div class="form-group">
                     <label for="expenseAmount">Amount *</label>
-                    <span style="position:absolute; padding:10px;">$</span>
+                    <span id="addCurrencyType" style="position:absolute; padding:10px;">$</span>
                     <input type="number" id="expenseAmount" style="text-indent:15px;" step="any" min="0" placeholder="0.00" required>
                 </div>
 
@@ -184,7 +185,7 @@
             <form id="settleExpenseForm" class="modal-form">
                 <div class="form-group">
                     <label for="settleAmount">Amount *</label>
-                    <span style="position:absolute; padding:10px;">$</span>
+                    <span id="settleCurrencyType" style="position:absolute; padding:10px;">$</span>
                     <input type="number" id="settleAmount" style="text-indent:15px;" step="any" min="0" placeholder="0.00" required>
                 </div>
 
